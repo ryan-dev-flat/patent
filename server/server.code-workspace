@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "patent",
+			"path": ".."
+		},
+		{
+			"name": "server",
+			"path": "."
+		}
+	],
+	"settings": {}
+}
