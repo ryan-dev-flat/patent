@@ -45,14 +45,14 @@ Patent Management System: A web application for managing patent registrations, c
 6. **As a user, I want to see a visual representation of my patentability score in the form of a patentability analysis chart/widget.**
 7. **As a user, I want to chat with an AI-powered chatbot to get answers to my patent-related queries and to develop my patent application**
 
-## React Tree Diagram
-![React Hierarchy](image-2.png)
 **Implement something new not taught in the curriculum.**
 [Axios](https://axios-http.com/docs/api_intro)?
 [Material UI](https://mui.com/material-ui/getting-started/)
 **Implement [`useContext`](https://react.dev/reference/react/useContext) or [Redux](https://redux.js.org/)to manage State**
-
 ## Implement validations and error handling.
+
+## React Tree Diagram
+![React Hierarchy](Patent-React-Tree-2.png)
 
 ## App Component
 - **State**:
