@@ -51,12 +51,12 @@ def analyze_patentability(idea):
     novelty = check_novelty(idea)
     non_obviousness = check_non_obviousness(idea)
     utility = check_utility(idea)
-    precedents = get_patent_precedents(idea)
+    prior_art = get_patent_prior_art()(idea)
     return {
         'novelty': novelty,
         'non_obviousness': non_obviousness,
         'utility': utility,
-        'precedents': precedents
+        'prior_art': prior_art
     }
 
 def check_novelty(idea):
@@ -83,10 +83,10 @@ def search_prior_art(idea):
         return response.json().get('results', [])
     return []
 
-def get_patent_precedents(idea):
+def get_patent_prior_art(idea):
     keywords = extract_keywords(idea)
-    precedents = search_case_law(keywords)
-    return precedents
+    prior_art = search_case_law(keywords)
+    return prior_art
 
 def extract_keywords(idea):
     return idea.split()

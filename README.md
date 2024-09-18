@@ -39,16 +39,19 @@ Patent Management System: A web application for managing patent registrations, c
 ## User Stories
 1. **As a user, I want to register an account so that I can access the patent management system.**
 2. **As a user, I want to log in to my account so that I can manage my patents.**
-    2.a **As a user, I may have many patents, and a patent can have many users.**
-3. **As a user, I want to create a new patent entry so that I can keep track of my inventions.**
-4. **As a user, I want to analyze the patentability of my invention idea so that I can determine its novelty, non-obviousness, and utility. I want an overall patentability score based on these factors. I want a prior art search performed to generate data to support the patentabillity score.**
-5. **As a user, I want to see a visual representation of my patentability score in the form of a patentability analysis chart/widget.**
-5. **As a user, I want to chat with an AI-powered chatbot to get answers to my patent-related queries and to develop my patent application**
+3. **As a user, I may have many patents, and a patent can have many users.**
+4. **As a user, I want to create a new patent entry so that I can keep track of my inventions.**
+5. **As a user, I want to analyze the patentability of my invention idea so that I can determine its novelty, non-obviousness, and utility. I want an overall patentability score based on these factors. I want a prior art search performed to generate data to support the patentabillity score.**
+6. **As a user, I want to see a visual representation of my patentability score in the form of a patentability analysis chart/widget.**
+7. **As a user, I want to chat with an AI-powered chatbot to get answers to my patent-related queries and to develop my patent application**
 
 ## React Tree Diagram
-![alt text](image-2.png)
-## Implement something new not taught in the curriculum. **Material UI**
-## Implement useContext or Redux. or (Axios)?
+![React Hierarchy](image-2.png)
+**Implement something new not taught in the curriculum.**
+[Axios](https://axios-http.com/docs/api_intro)?
+[Material UI](https://mui.com/material-ui/getting-started/)
+**Implement [`useContext`](https://react.dev/reference/react/useContext) or [Redux](https://redux.js.org/)to manage State**
+
 ## Implement validations and error handling.
 
 ## App Component
@@ -133,12 +136,12 @@ Patent Management System: A web application for managing patent registrations, c
   - Measures performance
 
 
-## Implement Flask and SQLAlchemy in an application backend.
+**Implement Flask and SQLAlchemy in an application backend.**
 
 ## Database Schema
-## Implement a minimum of 4 models
-## Include a many to many relationship.
-## Implement validations and error handling.
+**Implement a minimum of 4 models**
+**Include a many to many relationship.**
+**Implement validations and error handling.**
 
 ### Tables and Relationships
 
@@ -224,8 +227,11 @@ Patent Management System: A web application for managing patent registrations, c
 ![alt text](image-1.png)
 
 ## API Routes
-## Include full CRUD on at least 1 model, following REST conventions.
-## Implement validations and error handling.
+- Include full CRUD on at least 1 model, following REST conventions.
+- Implement validations and error handling.
+- Implement something new not taught in the curriculum.
+`JSON Web Tokens (JWT)`
+[Flask-JWT-Extended Basic Usage](https://flask-jwt-extended.readthedocs.io/en/stable/basic_usage.html)
 ## User Routes
 
 | HTTP Method | Endpoint          | Description                  | Request Body                  | Response Body                |
@@ -270,4 +276,4 @@ Patent Management System: A web application for managing patent registrations, c
 - **React Bootstrap**: For responsive design and additional UI components.
 - **Tailwind CSS**: For utility-first CSS styling.
 - **Deployment**: Plan to deploy the application using platforms like Heroku or Render.
-- **State Management**: Use React's `useContext` or Redux for state management.
+- **State Management**: Use React's [`useContext`]((https://react.dev/reference/react/useContext) ) or [Redux](https://redux.js.org/) for state management.
