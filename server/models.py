@@ -66,7 +66,7 @@ class Utility(db.Model, SerializerMixin):
     operability = db.Column(db.Boolean)
     beneficial = db.Column(db.Boolean)
     practical = db.Column(db.Boolean)
-    utility_score = db.Column(db.Boolean)
+    utility_score = db.Column(db.Float)
 
     def calculate_utility_score(self):
         # scoring logic
