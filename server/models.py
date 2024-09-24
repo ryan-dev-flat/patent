@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
 
+
 db = SQLAlchemy()
 
 class User(db.Model, SerializerMixin):
@@ -34,27 +35,26 @@ class Patent(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(128), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
     patentability_score = db.Column(db.Float)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     user = db.relationship('User', secondary='user_patent', back_populates='patents')
     utility = db.relationship('Utility', uselist=False, back_populates='patent')
-    novelty = db.relationship('NoveltyTest', uselist=False, back_populates='patent')
+    novelty = db.relationship('Novelty', uselist=False, back_populates='patent')
     obviousness = db.relationship('Obviousness', uselist=False, back_populates='patent')
-    prior_art = db.relationship('PriorArtSearch', uselist=False, back_populates='patent')
+    prior_art = db.relationship('PriorArt', uselist=False, back_populates='patent')
 
     def __repr__(self):
         return f'<Patent {self.title}>'
 
-    def calculate_patentability_score(patent):
-        novelty_score = patent.novelty.calculate_novelty_score()
-        utility_score = patent.utility.calculate_utility_score()
-        obviousness_score = patent.obviousness.calculate_obviousness_score()
+    def calculate_patentability_score(self):
+        novelty_score = self.novelty.calculate_novelty_score()
+        utility_score = self.utility.calculate_utility_score()
+        obviousness_score = self.obviousness.calculate_obviousness_score()
         patentability_score = (novelty_score * 0.4) + (utility_score * 0.3) + (obviousness_score * 0.3)
-        patent.patentability_score = patentability_score
+        self.patentability_score = patentability_score
         return patentability_score
-
 
 user_patent = db.Table('user_patent',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
@@ -67,9 +67,10 @@ class Utility(db.Model, SerializerMixin):
     beneficial = db.Column(db.Boolean)
     practical = db.Column(db.Boolean)
     utility_score = db.Column(db.Float)
+    patent_id = db.Column(db.Integer, db.ForeignKey('patent.id'))
+    patent = db.relationship('Patent', back_populates='utility')
 
     def calculate_utility_score(self):
-        # scoring logic
         score = 0.0
         if self.operability:
             score += 0.4
@@ -82,11 +83,27 @@ class Utility(db.Model, SerializerMixin):
 
 class PriorArt(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
-    elements = db.Column(db.String)
-    key_words = db.Column(db.String)
-    patent_search = db.Column(db.String)
-    publications = db.Column(db.String)
-    public_disclosures = db.Column(db.String)
+    patent_number = db.Column(db.String, nullable=False)
+    title = db.Column(db.String, nullable=False)
+    abstract = db.Column(db.Text, nullable=False)
+    url = db.Column(db.String, nullable=False)
+    patent_id = db.Column(db.Integer, db.ForeignKey('patent.id'))
+    patent = db.relationship('Patent', back_populates='prior_art')
+
+    def fetch_and_store_prior_art(self, description):
+        from .utils import fetch_patent_grants  # Lazy import
+        prior_art_data = fetch_patent_grants(description)
+        if prior_art_data:
+            for data in prior_art_data:
+                prior_art = PriorArt(
+                    patent_number=data['patent_number'],
+                    title=data['title'],
+                    abstract=data['abstract'],
+                    url=data['url'],
+                    patent_id=self.patent_id
+                )
+                db.session.add(prior_art)
+            db.session.commit()
 
 class Novelty(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -98,9 +115,10 @@ class Novelty(db.Model, SerializerMixin):
     patent_app = db.Column(db.Boolean)
     inventor_underoneyear = db.Column(db.Boolean)
     novelty_score = db.Column(db.Float)
+    patent_id = db.Column(db.Integer, db.ForeignKey('patent.id'))
+    patent = db.relationship('Patent', back_populates='novelty')
 
     def calculate_novelty_score(self):
-        #  Scoring logic
         score = 1.0
         if self.patented or self.printed_pub or self.public_use or self.on_sale or self.publicly_available or self.patent_app:
             score -= 0.2
@@ -109,7 +127,6 @@ class Novelty(db.Model, SerializerMixin):
         self.novelty_score = max(0, score)
         return self.novelty_score
 
-
 class Obviousness(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     prior_art_scope = db.Column(db.String, nullable=False)
@@ -117,12 +134,11 @@ class Obviousness(db.Model, SerializerMixin):
     skill_level = db.Column(db.String, nullable=False)
     secondary_considerations = db.Column(db.String)
     obviousness_score = db.Column(db.Float)
+    patent_id = db.Column(db.Integer, db.ForeignKey('patent.id'))
+    patent = db.relationship('Patent', back_populates='obviousness')
 
-def calculate_obviousness_score(self):
-        # Example scoring logic
+    def calculate_obviousness_score(self):
         score = 1.0
-        # Adjust score based on prior art scope, differences, skill level, and secondary considerations
-      # add more complex logic
         if "significant" in self.prior_art_scope:
             score -= 0.3
         if "minor" in self.differences:
@@ -133,5 +149,3 @@ def calculate_obviousness_score(self):
             score += 0.1
         self.obviousness_score = max(0, score)
         return self.obviousness_score
-
-
