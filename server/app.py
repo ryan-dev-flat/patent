@@ -1,8 +1,8 @@
 from flask import Flask
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
-from .models import db  # Use relative import
-from .config import Config
+from models import db  # Use relative import
+from config import Config
 
 def create_app():
     app = Flask(__name__)
@@ -12,7 +12,7 @@ def create_app():
     migrate = Migrate(app, db)
     jwt = JWTManager(app)
 
-    from .routes import main as main_blueprint
+    from routes import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
     return app

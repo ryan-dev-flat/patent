@@ -1,7 +1,7 @@
 // src/App.js
 import React, { useState } from 'react';
 import axios from 'axios';
-import jwt_decode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import { Button, TextField, Container, Typography, Box } from '@mui/material';
 import Chat from './components/Chat';
 import PatentabilityAnalysis from './components/PatentabilityAnalysis';
@@ -21,7 +21,7 @@ function App() {
     const response = await axios.post('http://localhost:5000/login', { username, password });
     const token = response.data.access_token;
     setToken(token);
-    const decoded = jwt_decode(token);
+    const decoded = jwtDecode(token);
     setUser(decoded);
   };
 
