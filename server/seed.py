@@ -1,3 +1,4 @@
+#seed.py
 from faker import Faker
 from models import db, User, Patent, Utility, Novelty, Obviousness
 from app import create_app
