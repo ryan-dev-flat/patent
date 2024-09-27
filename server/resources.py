@@ -1,3 +1,4 @@
+from flask import request, jsonify
 from flask_restful import Resource, reqparse
 import os
 import requests
@@ -293,6 +294,22 @@ class PriorArtResource(Resource):
         if not patent:
             return {'message': 'Patent not found'}, 404
 
+        # Fetch new prior art data using the API
+        prior_art_data = fetch_patent_grants(patent.description)
+
+        # Save the new prior art data to the database
+        for art in prior_art_data:
+            prior_art = PriorArt(
+                patent_number=art['patent_number'],
+                title=art['title'],
+                abstract=art['abstract'],
+                url=art['url'],
+                patent_id=patent.id
+            )
+            db.session.add(prior_art)
+        db.session.commit()
+
+        # Retrieve the saved prior art data from the database
         prior_art_list = PriorArt.query.filter_by(patent_id=patent.id).all()
         if not prior_art_list:
             return {'message': 'No prior art found for this patent'}, 404
@@ -312,6 +329,7 @@ class PriorArtResource(Resource):
     @cross_origin()
     def options(self):
         return '', 200
+
 
 
 class ChatResource(Resource):
@@ -345,4 +363,24 @@ def get_chatgpt_response(message):
         return response_json['choices'][0]['message']['content']
     else:
         return f"Error: {response_json.get('error', 'Unable to retrieve response from ChatGPT API.')}"
+
+class Dashboard(Resource):
+    def get(self):
+        user_id = request.args.get('user_id')
+        user = User.query.get(user_id)
+        if not user:
+            return {'message': 'User not found'}, 404
+
+        patent_summary = {
+            'totalPatents': user.count_total_patents(),
+            'pendingPatents': user.count_patents_by_status('Pending'),
+            'approvedPatents': user.count_patents_by_status('Approved'),
+            'rejectedPatents': user.count_patents_by_status('Rejected'),
+            'abandonedPatents': user.count_patents_by_status('Abandoned'),
+        }
+        return jsonify(patent_summary)
+
+    @cross_origin()
+    def options(self):
+        return '', 200
 

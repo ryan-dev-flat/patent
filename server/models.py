@@ -37,6 +37,7 @@ class Patent(db.Model, SerializerMixin):
     title = db.Column(db.String(128), nullable=False)
     description = db.Column(db.Text, nullable=False)
     patentability_score = db.Column(db.Float)
+    status = db.Column(db.String(64), nullable=False, default='Pending')  # Add status column
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
