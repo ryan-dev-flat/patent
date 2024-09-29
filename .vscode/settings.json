@@ -1,0 +1,9 @@
+{
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "json.trace.server": "verbose",
+    "vsicons.presets.jsonOfficial": true,
+    "[json]": {
+        "editor.defaultFormatter": "donjayamanne.python-environment-manager"
+    }
+}
