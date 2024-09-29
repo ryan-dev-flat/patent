@@ -7,7 +7,7 @@ function Login() {
 
     const handleLogin = async () => {
         try {
-            const response = await axios.post('/api/login', { username, password });
+            const response = await axios.post('http://127.0.0.1:5000/api/login', { username, password });
             localStorage.setItem('token', response.data.access_token);
             alert('Login successful');
         } catch (error) {

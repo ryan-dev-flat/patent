@@ -8,7 +8,7 @@ function PatentCards({ token }) {
     useEffect(() => {
         const fetchPatents = async () => {
             try {
-                const response = await axios.get('/api/patents', {
+                const response = await axios.get('http://127.0.0.1:5000/api/patents', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setPatents(response.data);
@@ -21,12 +21,12 @@ function PatentCards({ token }) {
 
     const handleUpdatePatent = async (patentId, updatedPatent) => {
         try {
-            await axios.patch(`/api/patents/${patentId}`, updatedPatent, {
+            await axios.patch(`http://127.0.0.1:5000/api/patents/${patentId}`, updatedPatent, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Patent updated successfully');
             // Refresh the patents list
-            const response = await axios.get('/api/patents', {
+            const response = await axios.get('http://127.0.0.1:5000/api/patents', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setPatents(response.data);
@@ -37,12 +37,12 @@ function PatentCards({ token }) {
 
     const handleDeletePatent = async (patentId) => {
         try {
-            await axios.delete(`/api/patents/${patentId}`, {
+            await axios.delete(`http://127.0.0.1:5000/api/patents/${patentId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Patent deleted successfully');
             // Refresh the patents list
-            const response = await axios.get('/api/patents', {
+            const response = await axios.get('http://127.0.0.1:5000/api/patents', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setPatents(response.data);

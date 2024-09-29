@@ -10,6 +10,7 @@ import PatentCards from './components/PatentCards';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import MyChartComponent from './components/MyChartComponent';
+import Logout from './components/Logout';  // Import the Logout component
 
 function App() {
   const [username, setUsername] = useState('');
@@ -69,6 +70,7 @@ function App() {
               <Typography variant="h2">Patent Analysis Chart</Typography>
               <MyChartComponent data={chartData} />
             </Box>
+            <Logout />  {/* Add the Logout component */}
           </>
         )}
         <Footer />
