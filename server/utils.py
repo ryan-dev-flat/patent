@@ -1,8 +1,6 @@
-import os
-from dotenv import load_dotenv
+
 import requests
 
-load_dotenv()
 
 # Access the API key
 
@@ -31,6 +29,7 @@ def fetch_patent_grants(keywords):
     else:
         print(f"Error fetching patents: {response.status_code} - {response.text}")
         return None
+
 
 def search_case_law(keywords):
     url = f'https://api.harvard.edu/federal-patent-caselaw?query={" ".join(keywords)}'
