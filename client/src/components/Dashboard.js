@@ -8,7 +8,7 @@ function Dashboard({ token }) {
     useEffect(() => {
         const fetchPatentSummary = async () => {
             try {
-                const response = await axios.get('/api/dashboard', {
+                const response = await axios.get('http://127.0.0.1:5000/api/dashboard', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setPatentSummary(response.data);

@@ -12,6 +12,8 @@ import Dashboard from './components/Dashboard';
 import PatentCards from './components/PatentCards';
 import MyChartComponent from './components/MyChartComponent';
 import Logout from './components/Logout';
+import ErrorBoundary from './components/ErrorBoundary';
+
 
 function App() {
   const [token, setToken] = useState('');
@@ -33,26 +35,28 @@ function App() {
       <Container>
         <Header />
         <Typography variant="h1">Patent Management</Typography>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/register" element={<Register setToken={setToken} setUser={setUser} />} />
-          <Route path="/login" element={<Login setToken={setToken} setUser={setUser} />} />
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/register" element={<Register setToken={setToken} setUser={setUser} />} />
+            <Route path="/login" element={<Login setToken={setToken} setUser={setUser} />} />
+            {token && (
+              <>
+                <Route path="/chat" element={<Chat token={token} />} />
+                <Route path="/analysis" element={<PatentabilityAnalysis token={token} />} />
+                <Route path="/dashboard" element={<Dashboard token={token} />} />
+                <Route path="/patents" element={<PatentCards token={token} />} />
+              </>
+            )}
+          </Routes>
           {token && (
-            <>
-              <Route path="/chat" element={<Chat token={token} />} />
-              <Route path="/analysis" element={<PatentabilityAnalysis token={token} />} />
-              <Route path="/dashboard" element={<Dashboard token={token} />} />
-              <Route path="/patents" element={<PatentCards token={token} />} />
-            </>
+            <Box>
+              <Typography variant="h2">Patent Analysis Chart</Typography>
+              <MyChartComponent data={chartData} />
+              <Logout />
+            </Box>
           )}
-        </Routes>
-        {token && (
-          <Box>
-            <Typography variant="h2">Patent Analysis Chart</Typography>
-            <MyChartComponent data={chartData} />
-            <Logout />
-          </Box>
-        )}
+        </ErrorBoundary>
         <Footer />
       </Container>
     </Router>

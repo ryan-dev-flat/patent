@@ -12,7 +12,7 @@ function PatentabilityAnalysis() {
     const handleSubmitIdea = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post('/api/patentability_analysis', { idea }, {
+            const response = await axios.post('http://127.0.0.1:5000/api/patentability_analysis', { idea }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setAnalysis(response.data.analysis);
