@@ -17,6 +17,6 @@ api.add_resource(PatentResource, '/patents', endpoint='patent_list', methods=['G
 api.add_resource(PatentResource, '/patents/<int:patent_id>/inventors', endpoint='patent_add_inventor')
 
 api.add_resource(PatentabilityAnalysisResource, '/patentability_analysis', endpoint='patentability_analysis')
-api.add_resource(PriorArtResource, '/prior_art', endpoint='prior_art')
+api.add_resource(PriorArtResource, '/patents/<int:patent_id>/prior_art', endpoint='prior_art')
 
 api.add_resource(UserResource, '/update_user', endpoint='user_update', methods=['PATCH'])

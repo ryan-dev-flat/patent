@@ -2,6 +2,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
+from utils import fetch_patent_grants
 
 
 db = SQLAlchemy()
@@ -93,7 +94,6 @@ class PriorArt(db.Model, SerializerMixin):
     patent = db.relationship('Patent', back_populates='prior_art')
 
     def fetch_and_store_prior_art(self, description):
-        from .utils import fetch_patent_grants  # Lazy import
         prior_art_data = fetch_patent_grants(description)
         if prior_art_data:
             for data in prior_art_data:

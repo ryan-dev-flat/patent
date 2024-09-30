@@ -1,7 +1,4 @@
 
-import requests
-
-
 # Access the API key
 
 import requests
