@@ -1,16 +1,32 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 
-function Register() {
+function Register({ setToken, setUser }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
     const handleRegister = async () => {
         try {
-            const response = await axios.post('/api/register', { username, password });
-            alert(response.data.message);
+            const response = await axios.post('http://localhost:5000/api/register', { username, password });
+            console.log('Response:', response);  // Log the response
+            if (response.status === 201) {
+                const token = response.data.access_token;
+                localStorage.setItem('token', token);
+                const decoded = jwtDecode(token);
+                setToken(token);
+                setUser(decoded);
+                alert('Registration successful');
+            } else {
+                alert('Registration failed');
+            }
         } catch (error) {
-            alert('Registration failed');
+            console.error('Error:', error);  // Log the error
+            if (error.response && error.response.data.error) {
+                alert(error.response.data.error);
+            } else {
+                alert('Registration failed');
+            }
         }
     };
 
