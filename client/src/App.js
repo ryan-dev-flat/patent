@@ -11,6 +11,8 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import MyChartComponent from './components/MyChartComponent';
 import Logout from './components/Logout';  // Import the Logout component
+import Home from './components/Home';
+import Login from './components/Login';
 
 function App() {
   const [username, setUsername] = useState('');
@@ -23,12 +25,19 @@ function App() {
   };
 
   const login = async () => {
-    const response = await axios.post('http://localhost:5000/api/login', { username, password });
-    const token = response.data.access_token;
-    setToken(token);
-    const decoded = jwtDecode(token);
-    setUser(decoded);
-  };
+    try {
+        const response = await axios.post('http://localhost:5000/api/login', { username, password });
+        const token = response.data.access_token;
+        console.log('Token:', token);  // Log the token
+        const decoded = jwtDecode(token);
+        console.log('Decoded:', decoded);  // Log the decoded token
+        setToken(token);
+        setUser(decoded);
+    } catch (error) {
+        console.error('Login failed', error);
+    }
+};
+
 
   const chartData = {
     labels: ['Novelty', 'Non-obviousness', 'Utility'],
@@ -61,6 +70,7 @@ function App() {
         {token && (
           <>
             <Routes>
+              <Route path="/" element={<Home />} />
               <Route path="/chat" element={<Chat token={token} />} />
               <Route path="/analysis" element={<PatentabilityAnalysis token={token} />} />
               <Route path="/dashboard" element={<Dashboard token={token} />} />
