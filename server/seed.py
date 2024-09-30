@@ -24,7 +24,7 @@ def create_patents(users, num_patents=20):
         patent = Patent(
             title=fake.sentence(nb_words=6),
             description=fake.text(max_nb_chars=200),
-            user_id=user.id
+            user_id=user.id  # Set the user_id explicitly
         )
         patents.append(patent)
         db.session.add(patent)

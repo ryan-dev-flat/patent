@@ -37,7 +37,7 @@ class Patent(db.Model, SerializerMixin):
     title = db.Column(db.String(128), nullable=False)
     description = db.Column(db.Text, nullable=False)
     patentability_score = db.Column(db.Float)
-    status = db.Column(db.String(64), nullable=False, default='Pending')  # Add status column
+    status = db.Column(db.String(64), nullable=False, default='Pending')
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
@@ -48,7 +48,7 @@ class Patent(db.Model, SerializerMixin):
     prior_art = db.relationship('PriorArt', uselist=False, back_populates='patent')
 
     def __repr__(self):
-        return f'<Patent {self.title}>'
+        return f'<Patent {self.title}, {self.description}>'
 
     def calculate_patentability_score(self):
         novelty_score = self.novelty.calculate_novelty_score()

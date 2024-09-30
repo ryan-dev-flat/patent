@@ -37,6 +37,6 @@ def calculate_and_populate_scores():
     print("Patentability scores and related scores have been calculated and populated successfully.")
 
 if __name__ == "__main__":
-    app = create_app()  # Create an instance of your Flask app
+    app = create_app()  # Create an instance of my Flask app
     with app.app_context():
         calculate_and_populate_scores()

@@ -24,7 +24,7 @@ def create_app():
     def after_request(response):
         response.headers['Access-Control-Allow-Origin'] = 'http://172.19.87.107:3000'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
-        response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
+        response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,PATCH,POST,DELETE,OPTIONS'
         return response
 
     return app

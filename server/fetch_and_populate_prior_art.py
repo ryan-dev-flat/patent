@@ -10,17 +10,20 @@ def fetch_and_populate_prior_art():
         # Fetch prior art data using the API
         prior_art_data = fetch_patent_grants(patent.description)
 
-        # Save the prior art data to the PriorArt table
-        for art in prior_art_data:
-            prior_art = PriorArt(
-                patent_number=art['patent_number'],
-                title=art['title'],
-                abstract=art['abstract'],
-                url=art['url'],
-                patent_id=patent.id
-            )
-            db.session.add(prior_art)
-        db.session.commit()
+        if prior_art_data:
+            # Save the prior art data to the PriorArt table
+            for art in prior_art_data:
+                prior_art = PriorArt(
+                    patent_number=art['patent_number'],
+                    title=art['title'],
+                    abstract=art['abstract'],
+                    url=art['url'],
+                    patent_id=patent.id
+                )
+                db.session.add(prior_art)
+            db.session.commit()
+        else:
+            print(f"No patents found for keywords: {patent.description}")
 
     print("Prior art data has been fetched and populated successfully.")
 

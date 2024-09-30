@@ -1,11 +1,12 @@
-from flask import request, jsonify
+from flask import request, jsonify, make_response
 from flask_restful import Resource, reqparse
 import os
 import requests
 from models import db, User, Patent, Novelty, Utility, Obviousness, PriorArt
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, unset_jwt_cookies, set_access_cookies
 from utils import fetch_patent_grants
 from flask_cors import cross_origin
+from sqlalchemy.exc import IntegrityError
 
 import spacy
 
@@ -31,10 +32,20 @@ class UserResource(Resource):
         parser.add_argument('password', required=True, help="Password cannot be blank!")
         args = parser.parse_args()
 
+        # Check if the username already exists
+        if User.query.filter_by(username=args['username']).first():
+            return {'error': 'Username already exists'}, 400
+
         new_user = User(username=args['username'], password=args['password'])
         db.session.add(new_user)
-        db.session.commit()
-        return {'message': 'User registered successfully'}, 201
+        try:
+            db.session.commit()
+            # Generate access token
+            access_token = create_access_token(identity=args['username'])
+            return jsonify({"message": "User registered successfully", "access_token": access_token}), 201
+        except IntegrityError:
+            db.session.rollback()
+            return {'error': 'Username already exists'}, 400
 
     @jwt_required()
     @cross_origin()
@@ -97,6 +108,20 @@ class LoginResource(Resource):
     def options(self):
         return '', 200
 
+
+class LogoutResource(Resource):
+    @jwt_required()
+    @cross_origin()
+    def post(self):
+        response = jsonify({"msg": "Logout successful"})
+        unset_jwt_cookies(response)
+        return response, 200
+    
+    @cross_origin()
+    def options(self):
+        return '', 200
+
+
 class PatentResource(Resource):
     @jwt_required()
     @cross_origin()
@@ -109,20 +134,6 @@ class PatentResource(Resource):
         user_id = get_jwt_identity()
         new_patent = Patent(title=args['title'], description=args['description'], user_id=user_id)
         db.session.add(new_patent)
-        db.session.commit()
-
-        # Create and associate Novelty, Utility, and Obviousness instances
-        novelty = Novelty(patent_id=new_patent.id)
-        utility = Utility(patent_id=new_patent.id)
-        obviousness = Obviousness(patent_id=new_patent.id)
-        db.session.add(novelty)
-        db.session.add(utility)
-        db.session.add(obviousness)
-        db.session.commit()
-
-        # Populate the user_patent table
-        user = User.query.get(user_id)
-        user.patents.append(new_patent)
         db.session.commit()
 
         return {'message': 'Patent created successfully'}, 201
@@ -170,10 +181,29 @@ class PatentResource(Resource):
             return {'message': 'Patent deleted successfully'}, 200
         return {'message': 'Patent not found'}, 404
 
+    @jwt_required()
+    @cross_origin()
+    def add_inventor(self, patent_id):
+        user_id = get_jwt_identity()
+        patent = Patent.query.filter_by(id=patent_id, user_id=user_id).first()
+        if not patent:
+            return jsonify({"error": "Patent not found"}), 404
+
+        data = request.get_json()
+        inventor_name = data.get('name')
+
+        inventor = User.query.filter_by(username=inventor_name).first()
+        if not inventor:
+            return jsonify({"error": "Inventor not found"}), 404
+
+        patent.user.append(inventor)
+        db.session.commit()
+
+        return jsonify({"message": "Inventor added successfully"}), 200
+
     @cross_origin()
     def options(self):
         return '', 200
-
 
 class PatentabilityAnalysisResource(Resource):
     @jwt_required()
@@ -203,166 +233,58 @@ class PatentabilityAnalysisResource(Resource):
             )
         db.session.commit()
 
-        # Perform the analysis
-        prior_art_data = fetch_patent_grants(patent.description)
+        # Calculate scores
         novelty_score = patent.novelty.calculate_novelty_score()
         utility_score = patent.utility.calculate_utility_score()
         obviousness_score = patent.obviousness.calculate_obviousness_score()
-        patentability_score = patent.calculate_patentability_score()
-
-        # Save the scores to the database
-        patent.novelty.novelty_score = novelty_score
-        patent.utility.utility_score = utility_score
-        patent.obviousness.obviousness_score = obviousness_score
+        patentability_score = (novelty_score * 0.4) + (utility_score * 0.3) + (obviousness_score * 0.3)
         patent.patentability_score = patentability_score
+
         db.session.commit()
 
-        # Save prior art data to the PriorArt table
-        for art in prior_art_data:
-            prior_art = PriorArt(
-                patent_number=art['patent_number'],
-                title=art['title'],
-                abstract=art['abstract'],
-                url=art['url'],
-                patent_id=patent.id
-            )
-            db.session.add(prior_art)
-        db.session.commit()
-
-        return {
+        return jsonify({
             'novelty_score': novelty_score,
             'utility_score': utility_score,
             'obviousness_score': obviousness_score,
-            'patentability_score': patentability_score,
-            'prior_art': prior_art_data
-        }
+            'patentability_score': patentability_score
+        }), 200
 
     @cross_origin()
     def options(self):
         return '', 200
 
-
-
-
-
-
-def analyze_patentability(idea):
-    prior_art_data = fetch_patent_grants(idea)
-    novelty = check_novelty(prior_art_data)
-    non_obviousness = check_non_obviousness(prior_art_data)
-    utility = check_utility(prior_art_data)
-
-    # Example values for required fields
-    prior_art_scope = "Some scope"
-    differences = "Some differences"
-    skill_level = "Some skill level"
-    secondary_considerations = "Some considerations"
-
-    return {
-        'novelty': novelty,
-        'non_obviousness': non_obviousness,
-        'utility': utility,
-        'prior_art': prior_art_data,
-        'prior_art_scope': prior_art_scope,
-        'differences': differences,
-        'skill_level': skill_level,
-        'secondary_considerations': secondary_considerations
-    }
-
-
-def check_novelty(prior_art_data):
-    if prior_art_data:
-        return "The idea is not novel. Similar inventions exist."
-    return "The idea is novel."
-
-def check_non_obviousness(prior_art_data):
-    if prior_art_data:
-        return "The idea is obvious based on existing inventions."
-    return "The idea is non-obvious."
-
-def check_utility(prior_art_data):
-    if any("useful" in art['abstract'].lower() for art in prior_art_data):
-        return "The idea has utility."
-    return "The idea lacks utility."
-
+    
 class PriorArtResource(Resource):
-    @jwt_required()
-    @cross_origin()
-    def get(self, patent_id):
-        user_id = get_jwt_identity()
-        patent = Patent.query.filter_by(id=patent_id, user_id=user_id).first()
-        if not patent:
-            return {'message': 'Patent not found'}, 404
-
-        # Fetch new prior art data using the API
-        prior_art_data = fetch_patent_grants(patent.description)
-
-        # Save the new prior art data to the database
-        for art in prior_art_data:
-            prior_art = PriorArt(
-                patent_number=art['patent_number'],
-                title=art['title'],
-                abstract=art['abstract'],
-                url=art['url'],
-                patent_id=patent.id
-            )
-            db.session.add(prior_art)
-        db.session.commit()
-
-        # Retrieve the saved prior art data from the database
-        prior_art_list = PriorArt.query.filter_by(patent_id=patent.id).all()
-        if not prior_art_list:
-            return {'message': 'No prior art found for this patent'}, 404
-
-        prior_art_data = [
-            {
-                'patent_number': art.patent_number,
-                'title': art.title,
-                'abstract': art.abstract,
-                'url': art.url
-            }
-            for art in prior_art_list
-        ]
-
-        return {'prior_art': prior_art_data}, 200
-
-    @cross_origin()
-    def options(self):
-        return '', 200
-
-
-
-class ChatResource(Resource):
     @jwt_required()
     @cross_origin()
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('message', required=True, help="Message cannot be blank!")
+        parser.add_argument('idea', required=True, help="Idea cannot be blank!")
         args = parser.parse_args()
 
-        user_message = args['message']
-        response = get_chatgpt_response(user_message)
-        patents = fetch_patent_grants(user_message)
-        return {'response': response, 'patents': patents}
+        idea = args['idea']
+        prior_art_list = search_prior_art(idea)
+
+        if not prior_art_list:
+            return {'message': 'No prior art found'}, 404
+
+        prior_art_data = [
+            {
+                'patent_number': art['patent_number'],
+                'title': art['title'],
+                'abstract': art['abstract'],
+                'url': art['url']
+            }
+            for art in prior_art_list
+        ]
+
+        return jsonify({'prior_art': prior_art_data}), 200
 
     @cross_origin()
     def options(self):
         return '', 200
 
-def get_chatgpt_response(message):
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    payload = {
-        'model': 'gpt-3.5-turbo',
-        'messages': [{'role': 'user', 'content': message}]
-    }
-    response = requests.post('https://chatgpt-api.shn.hk/v1/', headers=headers, json=payload)
-    response_json = response.json()
-    if 'choices' in response_json and len(response_json['choices']) > 0:
-        return response_json['choices'][0]['message']['content']
-    else:
-        return f"Error: {response_json.get('error', 'Unable to retrieve response from ChatGPT API.')}"
+
 
 class Dashboard(Resource):
     def get(self):
