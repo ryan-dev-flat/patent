@@ -1,23 +1,28 @@
-import axios from 'axios';
+import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { UserContext } from '../context/UserContext';
+import axiosInstance from '../utils/axiosInstance';
 
-const logout = async () => {
+function Logout() {
+  const { logout } = useContext(UserContext);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
     try {
-        await axios.post('http://127.0.0.1:5000/api/logout', {}, {
-            withCredentials: true
-        });
-        // Clear user data from local storage or state
-        localStorage.removeItem('token');
-        // Redirect to login or home page
-        window.location.href = '/login';
+      await axiosInstance.post('/logout'); // Assuming you have a logout endpoint
+      logout();
+      navigate('/login');
     } catch (error) {
-        console.error('Logout failed', error);
+      console.error('Logout failed', error);
     }
-};
+  };
 
-const Logout = () => {
-    return (
-        <button onClick={logout}>Logout</button>
-    );
-};
+  return (
+    <button onClick={handleLogout}>
+      Logout
+    </button>
+  );
+}
 
 export default Logout;
+
