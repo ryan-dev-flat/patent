@@ -11,6 +11,7 @@ import PatentabilityAnalysis from './components/PatentabilityAnalysis';
 import MyChartComponent from './components/MyChartComponent';
 import Logout from './components/Logout';
 import ErrorBoundary from './components/ErrorBoundary';
+import CreatePatentForm from './components/CreatePatentForm';
 
 function App() {
   return (
@@ -22,6 +23,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/create-patent" element={<CreatePatentForm/>} />
+          
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/patents" element={<PatentCards />} />
             <Route path="/patents/:id/analysis" element={<PatentabilityAnalysis />} />
