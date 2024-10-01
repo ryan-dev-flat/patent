@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 
 const CreatePatentForm = ({ onPatentCreated }) => {
@@ -7,11 +8,12 @@ const CreatePatentForm = ({ onPatentCreated }) => {
   const [status, setStatus] = useState('Pending');
   const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axiosInstance.get('/users', {
+        const response = await axiosInstance.get('/users/all', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
@@ -39,6 +41,7 @@ const CreatePatentForm = ({ onPatentCreated }) => {
         }
       });
       onPatentCreated(response.data.patent_id);
+      navigate('/dashboard'); // Redirect to the dashboard
     } catch (error) {
       console.error('Error creating patent', error);
     }
