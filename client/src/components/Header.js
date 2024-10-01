@@ -27,6 +27,7 @@ const Header = () => {
                         <li className="nav-item">
                             <Link className="nav-link" to="/logout">Logout</Link>
                         </li>
+                    {/* add the Register Link */}
                     </ul>
                 </div>
             </div>

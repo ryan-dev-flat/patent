@@ -27,6 +27,7 @@ function App() {
             <Route path="/patents/:id/analysis" element={<PatentabilityAnalysis />} />
             <Route path="/patents/:id/chart" element={<MyChartComponent />} />
             <Route path="/logout" element={<Logout />} />
+
           </Routes>
         </ErrorBoundary>
         <Footer />

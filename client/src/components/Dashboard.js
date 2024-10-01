@@ -1,24 +1,22 @@
 // src/components/Dashboard.js
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import PatentCard from './PatentCard'; // Ensure this path is correct
 import axiosInstance from '../utils/axiosInstance';
+import PatentCard from './PatentCard'; // Ensure this path is correct
 
 const Dashboard = () => {
   const [stats, setStats] = useState({});
   const [patents, setPatents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axiosInstance.get('/dashboard', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
+        const response = await axiosInstance.get('/dashboard');
         setStats(response.data);
       } catch (error) {
         console.error('Error fetching dashboard data', error);
+        setError(error);
       }
     };
 
@@ -32,12 +30,27 @@ const Dashboard = () => {
         setPatents(response.data);
       } catch (error) {
         console.error('Error fetching patents', error);
+        setError(error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchStats();
     fetchPatents();
   }, []);
+
+  const handleDeletePatent = (id) => {
+    setPatents(patents.filter(patent => patent.id !== id));
+  };
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>Error loading data: {error.message}</p>;
+  }
 
   return (
     <div>
@@ -52,11 +65,11 @@ const Dashboard = () => {
       <p>Invalidated Patents: {stats.invalidated_patents_count}</p>
       <div>
         {patents.length > 0 ? (
-            patents.map(patent => (
-                <PatentCard key={patent.id} patent={patent} />
-            ))
+          patents.map(patent => (
+            <PatentCard key={patent.id} patent={patent} onDelete={handleDeletePatent} />
+          ))
         ) : (
-            <p>No patents found.</p>
+          <p>No patents found.</p>
         )}
       </div>
     </div>

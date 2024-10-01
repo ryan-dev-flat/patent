@@ -9,7 +9,7 @@ function Logout() {
 
   const handleLogout = async () => {
     try {
-      await axiosInstance.post('/logout'); // Assuming you have a logout endpoint
+      await axiosInstance.post('/logout');
       logout();
       navigate('/login');
     } catch (error) {
