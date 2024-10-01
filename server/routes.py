@@ -1,6 +1,13 @@
 from flask import Blueprint
 from flask_restful import Api
-from resources import UserResource, PatentResource, LoginResource, LogoutResource, PatentabilityAnalysisResource, PriorArtResource
+from resources import UserResource, PatentResource, LoginResource, LogoutResource, PatentabilityAnalysisResource, PriorArtResource 
+from novelty_analysis_resource import NoveltyAnalysisResource
+from utility_analysis_resource import UtilityAnalysisResource
+from obviousness_analysis_resource import ObviousnessAnalysisResource
+from patentability_analysis_resource import PatentabilityAnalysisResource
+from add_user_to_patent_resource import AddUserToPatentResource
+from remove_user_from_patent_resource import RemoveUserFromPatentResource
+from dashboard_resource import DashboardResource
 
 main = Blueprint('main', __name__)
 api = Api(main)
@@ -8,15 +15,26 @@ api = Api(main)
 api.add_resource(UserResource, '/register', endpoint='user_register')
 api.add_resource(LoginResource, '/login', endpoint='user_login')
 api.add_resource(LogoutResource, '/logout', endpoint='user_logout')
+api.add_resource(UserResource, '/update_user', endpoint='user_update', methods=['PATCH'])
 api.add_resource(UserResource, '/delete_account', endpoint='user_delete_account')
 
 api.add_resource(PatentResource, '/patents', endpoint='patent_create')
 api.add_resource(PatentResource, '/patents/<int:patent_id>', endpoint='patent_update', methods=['PATCH'])
 api.add_resource(PatentResource, '/patents/<int:patent_id>', endpoint='patent_delete', methods=['DELETE'])
 api.add_resource(PatentResource, '/patents', endpoint='patent_list', methods=['GET'])
-api.add_resource(PatentResource, '/patents/<int:patent_id>/inventors', endpoint='patent_add_inventor')
 
-api.add_resource(PatentabilityAnalysisResource, '/patentability_analysis', endpoint='patentability_analysis')
+api.add_resource(AddUserToPatentResource, '/patents/<int:patent_id>/add_user', endpoint='add_user_to_patent')
+
+api.add_resource(RemoveUserFromPatentResource, '/patents/<int:patent_id>/remove_user', endpoint='remove_user_from_patent')
+
 api.add_resource(PriorArtResource, '/patents/<int:patent_id>/prior_art', endpoint='prior_art')
 
-api.add_resource(UserResource, '/update_user', endpoint='user_update', methods=['PATCH'])
+api.add_resource(UtilityAnalysisResource, '/patents/<int:patent_id>/analysis/utility', endpoint='utility_analysis')
+
+api.add_resource(NoveltyAnalysisResource, '/patents/<int:patent_id>/analysis/novelty', endpoint='novelty_analysis')
+
+api.add_resource(ObviousnessAnalysisResource, '/patents/<int:patent_id>/analysis/obviousness', endpoint='obviousness_analysis')
+
+api.add_resource(PatentabilityAnalysisResource, '/patents/<int:patent_id>/analysis/patentability_score', endpoint='patentability_score')
+
+api.add_resource(DashboardResource, '/dashboard', endpoint='dashboard')

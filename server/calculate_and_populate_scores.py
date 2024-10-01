@@ -3,7 +3,7 @@ from models import db, Patent, Novelty, Utility, Obviousness
 
 def calculate_and_populate_scores():
     # Fetch the first 20 patents
-    patents = Patent.query.limit(20).all()
+    patents = Patent.query.all()
 
     for patent in patents:
         # Ensure novelty, utility, and obviousness instances exist

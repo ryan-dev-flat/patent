@@ -289,24 +289,3 @@ class PriorArtResource(Resource):
         return '', 200
 
 
-
-class Dashboard(Resource):
-    def get(self):
-        user_id = request.args.get('user_id')
-        user = User.query.get(user_id)
-        if not user:
-            return {'message': 'User not found'}, 404
-
-        patent_summary = {
-            'totalPatents': user.count_total_patents(),
-            'pendingPatents': user.count_patents_by_status('Pending'),
-            'approvedPatents': user.count_patents_by_status('Approved'),
-            'rejectedPatents': user.count_patents_by_status('Rejected'),
-            'abandonedPatents': user.count_patents_by_status('Abandoned'),
-        }
-        return jsonify(patent_summary)
-
-    @cross_origin()
-    def options(self):
-        return '', 200
-
