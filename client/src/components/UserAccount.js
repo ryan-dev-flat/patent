@@ -12,7 +12,7 @@ const UserAccount = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axiosInstance.get('/user', {
+        const response = await axiosInstance.get('/update_user', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }

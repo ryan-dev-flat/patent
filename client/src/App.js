@@ -32,7 +32,7 @@ function App() {
             <Route path="/patents/:id/analysis" element={<PatentabilityAnalysis />} />
             <Route path="/patents/:id/chart" element={<MyChartComponent />} />
             <Route path="/logout" element={<Logout />} />
-            <Route path="/account" element={<UserAccount />} />
+            <Route path="/user-account" element={<UserAccount />} />
           </Routes>
         </ErrorBoundary>
         <Footer />
