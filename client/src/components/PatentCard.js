@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 
-const PatentCard = ({ patent, onDelete }) => {
+const PatentCard = ({ patent, onDelete, onUpdate }) => {
   const [priorArt, setPriorArt] = useState([]);
   const [utility, setUtility] = useState({});
   const [novelty, setNovelty] = useState({});
@@ -93,7 +93,7 @@ const PatentCard = ({ patent, onDelete }) => {
         Patentability Score: <Link to={`/patents/${patent.id}/analysis/patentability_score`}>{patentability.patentability_score || 'N/A'}</Link>
       </p>
       <div>
-        <Link to={`/patents/${patent.id}/update`}>Update</Link>
+        <button onClick={() => onUpdate(patent.id)}>Update</button>
         <Link to={`/patents/${patent.id}/prior_art`}>Show Prior Art</Link>
         <Link to={`/patents/${patent.id}/analysis`}>Analyze</Link>
         <Link to={`/patents/${patent.id}/chart`}>View Chart</Link>

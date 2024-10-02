@@ -12,6 +12,7 @@ import MyChartComponent from './components/MyChartComponent';
 import Logout from './components/Logout';
 import ErrorBoundary from './components/ErrorBoundary';
 import CreatePatentForm from './components/CreatePatentForm';
+import UpdatePatentForm from './components/UpdatePatentForm'; 
 
 function App() {
   return (
@@ -24,13 +25,12 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
             <Route path="/create-patent" element={<CreatePatentForm/>} />
-          
+            <Route path="/patents/:patentId/update" element={<UpdatePatentForm />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/patents" element={<PatentCards />} />
             <Route path="/patents/:id/analysis" element={<PatentabilityAnalysis />} />
             <Route path="/patents/:id/chart" element={<MyChartComponent />} />
             <Route path="/logout" element={<Logout />} />
-
           </Routes>
         </ErrorBoundary>
         <Footer />
