@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -14,17 +14,22 @@ import ErrorBoundary from './components/ErrorBoundary';
 import CreatePatentForm from './components/CreatePatentForm';
 import UpdatePatentForm from './components/UpdatePatentForm';
 import UserAccount from './components/UserAccount';
+import { UserProvider } from './context/UserContext';
 
 function App() {
+
+  const [token, setToken] = useState('');
+
   return (
+    <UserProvider>
     <Router>
       <div className="App">
         <Header />
         <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register setToken={setToken} />} />
+            <Route path="/login" element={<Login setToken={setToken} />} />
             <Route path="/create-patent" element={<CreatePatentForm/>} />
             <Route path="/patents/:patentId/update" element={<UpdatePatentForm />} />
             <Route path="/dashboard" element={<Dashboard />} />
@@ -38,6 +43,7 @@ function App() {
         <Footer />
       </div>
     </Router>
+    </UserProvider>
   );
 }
 
