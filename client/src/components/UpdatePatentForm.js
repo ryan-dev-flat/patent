@@ -136,12 +136,7 @@ const UpdatePatentForm = () => {
         </select>
       </div>
       <div>
-        <label>Additional Users:</label>
-        <select multiple value={selectedUsers} onChange={(e) => setSelectedUsers([...e.target.selectedOptions].map(option => option.value))}>
-          {Array.isArray(users) && users.map(user => (
-            <option key={user.id} value={user.id}>{user.username}</option>
-          ))}
-        </select>
+        
       </div>
       <div>
         <label>Add User by Username:</label>

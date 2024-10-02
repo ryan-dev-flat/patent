@@ -1,41 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
+import { UserContext } from '../context/UserContext';
 
 const CreatePatentForm = ({ onPatentCreated }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('Pending');
-  const [users, setUsers] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [inventors, setInventors] = useState([]);
+  const [newUsername, setNewUsername] = useState('');
   const navigate = useNavigate();
+  const { user } = useContext(UserContext);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await axiosInstance.get('/users/all', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        setUsers(response.data);
-      } catch (error) {
-        console.error('Error fetching users', error);
-      }
-    };
-
-    fetchUsers();
-  }, []);
+  const handleAddInventor = () => {
+    if (newUsername && !inventors.includes(newUsername)) {
+      setInventors([...inventors, newUsername]);
+      setNewUsername('');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axiosInstance.post('/patents', {
+      const createData = {
         title,
         description,
         status,
-        user_ids: selectedUsers
-      }, {
+        inventors: [user.username, ...inventors]
+      };
+
+      const response = await axiosInstance.post('/patents', createData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -68,12 +62,19 @@ const CreatePatentForm = ({ onPatentCreated }) => {
         </select>
       </div>
       <div>
-        <label>Additional Users:</label>
-        <select multiple value={selectedUsers} onChange={(e) => setSelectedUsers([...e.target.selectedOptions].map(option => option.value))}>
-          {users.map(user => (
-            <option key={user.id} value={user.id}>{user.username}</option>
+        <label>Additional Inventors:</label>
+        <input
+          type="text"
+          value={newUsername}
+          onChange={(e) => setNewUsername(e.target.value)}
+        />
+        <button type="button" onClick={handleAddInventor}>Add Inventor</button>
+        <ul>
+          <li>{user.username} (Current User)</li>
+          {inventors.map((inventor, index) => (
+            <li key={index}>{inventor}</li>
           ))}
-        </select>
+        </ul>
       </div>
       <button type="submit">Create Patent</button>
     </form>
@@ -81,3 +82,4 @@ const CreatePatentForm = ({ onPatentCreated }) => {
 };
 
 export default CreatePatentForm;
+

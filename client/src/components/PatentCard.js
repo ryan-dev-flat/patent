@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 
-const PatentCard = ({ patent, onDelete, onUpdate }) => {
+const PatentCard = ({ patent, onDelete }) => {
   const [priorArt, setPriorArt] = useState([]);
   const [utility, setUtility] = useState({});
   const [novelty, setNovelty] = useState({});
   const [obviousness, setObviousness] = useState({});
   const [patentability, setPatentability] = useState({});
   const [users, setUsers] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAdditionalData = async () => {
@@ -93,7 +94,9 @@ const PatentCard = ({ patent, onDelete, onUpdate }) => {
         Patentability Score: <Link to={`/patents/${patent.id}/analysis/patentability_score`}>{patentability.patentability_score || 'N/A'}</Link>
       </p>
       <div>
-        <button onClick={() => onUpdate(patent.id)}>Update</button>
+        <Link to={`/patents/${patent.id}/update`}>
+          <button>Update</button>
+        </Link>
         <Link to={`/patents/${patent.id}/prior_art`}>Show Prior Art</Link>
         <Link to={`/patents/${patent.id}/analysis`}>Analyze</Link>
         <Link to={`/patents/${patent.id}/chart`}>View Chart</Link>
@@ -102,27 +105,18 @@ const PatentCard = ({ patent, onDelete, onUpdate }) => {
       <div>
         <h3>Prior Art</h3>
         {priorArt.length > 0 ? (
-          priorArt.map(art => (
-            <div key={art.patent_number}>
-              <p>Patent Number: {art.patent_number}</p>
-              <p>Title: {art.title}</p>
-              <a href={art.url} target="_blank" rel="noopener noreferrer">View Patent</a>
-            </div>
-          ))
+          <ul>
+            {priorArt.map((art, index) => (
+              <li key={index}>
+                <p>Title: {art.title}</p>
+                <p>Abstract: {art.abstract}</p>
+                <p>Patent Number: {art.patent_number}</p>
+                <a href={art.url} target="_blank" rel="noopener noreferrer">View Patent</a>
+              </li>
+            ))}
+          </ul>
         ) : (
           <p>No prior art found.</p>
-        )}
-      </div>
-      <div>
-        <h3>Inventors</h3>
-        {users.length > 0 ? (
-          users.map(user => (
-            <div key={user.id}>
-              <p>Username: {user.username}</p>
-            </div>
-          ))
-        ) : (
-          <p>No inventors found.</p>
         )}
       </div>
     </div>
