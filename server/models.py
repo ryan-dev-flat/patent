@@ -37,8 +37,9 @@ class Patent(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(128), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    patentability_score = db.Column(db.Float)
     status = db.Column(db.String(64), nullable=False, default='Pending')
+    patentability_score = db.Column(db.Float)
+   
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
@@ -63,6 +64,29 @@ user_patent = db.Table('user_patent',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('patent_id', db.Integer, db.ForeignKey('patent.id'), primary_key=True)
 )
+class PriorArt(db.Model, SerializerMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    patent_number = db.Column(db.String, nullable=False)
+    title = db.Column(db.String, nullable=False)
+    abstract = db.Column(db.Text, nullable=False)
+    url = db.Column(db.String, nullable=False)
+    patent_id = db.Column(db.Integer, db.ForeignKey('patent.id'))
+    
+    patent = db.relationship('Patent', back_populates='prior_art')
+
+    def fetch_and_store_prior_art(self, description):
+        prior_art_data = fetch_patent_grants(description)
+        if prior_art_data:
+            for data in prior_art_data:
+                prior_art = PriorArt(
+                    patent_number=data['patent_number'],
+                    title=data['title'],
+                    abstract=data['abstract'],
+                    url=data['url'],
+                    patent_id=self.patent_id
+                )
+                db.session.add(prior_art)
+            db.session.commit()
 
 class Utility(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -84,28 +108,6 @@ class Utility(db.Model, SerializerMixin):
         self.utility_score = score
         return self.utility_score
 
-class PriorArt(db.Model, SerializerMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    patent_number = db.Column(db.String, nullable=False)
-    title = db.Column(db.String, nullable=False)
-    abstract = db.Column(db.Text, nullable=False)
-    url = db.Column(db.String, nullable=False)
-    patent_id = db.Column(db.Integer, db.ForeignKey('patent.id'))
-    patent = db.relationship('Patent', back_populates='prior_art')
-
-    def fetch_and_store_prior_art(self, description):
-        prior_art_data = fetch_patent_grants(description)
-        if prior_art_data:
-            for data in prior_art_data:
-                prior_art = PriorArt(
-                    patent_number=data['patent_number'],
-                    title=data['title'],
-                    abstract=data['abstract'],
-                    url=data['url'],
-                    patent_id=self.patent_id
-                )
-                db.session.add(prior_art)
-            db.session.commit()
 
 class Novelty(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)

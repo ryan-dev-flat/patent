@@ -37,10 +37,10 @@ Patent Management System: A web application for managing patent registrations, c
 
 
 ## User Stories
-1. **As a user, I want to register an account so that I can access the patent management system.**
+1. **As a user, I want to register an account so that I can access the patent management system. I want to update and delete my account**
 2. **As a user, I want to log in to my account so that I can manage my patents.**
 3. **As a user, I may have many patents, and a patent can have many users.**
-4. **As a user, I want to create a new patent entry so that I can keep track of my inventions.**
+4. **As a user, I want to create a new patent entry so that I can keep track of my inventions, and to update and delete my patents**
 5. **As a user, I want to analyze the patentability of my invention idea so that I can determine its novelty, non-obviousness, and utility. I want an overall patentability score based on these factors. I want a prior art search performed to generate data to support the patentabillity score.**
 6. **As a user, I want to see a visual representation of my patentability score in the form of a patentability analysis chart/widget.**
 7. **As a user, I want to chat with an AI-powered chatbot to get answers to my patent-related queries and to develop my patent application**
@@ -224,7 +224,7 @@ Patent Management System: A web application for managing patent registrations, c
 ## Schema Screenshot
 !Schema Screenshot
 
-![alt text](image-1.png)
+![alt text](image-3.png)
 
 ## API Routes
 - Include full CRUD on at least 1 model, following REST conventions.
