@@ -2,17 +2,25 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.orm import validates
-from utils import fetch_patent_grants
+from .utils import fetch_patent_grants
 
 
 db = SQLAlchemy()
 
+user_patent = db.Table(
+    'user_patent',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('patent_id', db.Integer, db.ForeignKey('patent.id'), primary_key=True)
+)
+    
 class User(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     password = db.Column(db.String(128), nullable=False)
 
-    patents = db.relationship('Patent', secondary='user_patent', back_populates='user')
+    user_patents = db.relationship('Patent', secondary=user_patent, backref=db.backref('submitted_by', lazy=True)) 
+    # Changed 'users' to 'submitted_by'
+    
 
     @validates('username')
     def validate_username(self, key, username):
@@ -42,11 +50,16 @@ class Patent(db.Model, SerializerMixin):
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
-    user = db.relationship('User', secondary='user_patent', back_populates='patents')
+    # Many-to-many relationship with User through user_patent table
+    users = db.relationship('User', secondary=user_patent, backref=db.backref('associated_patents', lazy=True))
+
+    # One-to-one relationships with other models
     utility = db.relationship('Utility', uselist=False, back_populates='patent')
     novelty = db.relationship('Novelty', uselist=False, back_populates='patent')
     obviousness = db.relationship('Obviousness', uselist=False, back_populates='patent')
     prior_art = db.relationship('PriorArt', uselist=False, back_populates='patent')
+
+   
 
     def __repr__(self):
         return f'<Patent {self.title}, {self.description}>'
@@ -59,10 +72,7 @@ class Patent(db.Model, SerializerMixin):
         self.patentability_score = patentability_score
         return patentability_score
 
-user_patent = db.Table('user_patent',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('patent_id', db.Integer, db.ForeignKey('patent.id'), primary_key=True)
-)
+
 
 class Utility(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)

@@ -1,7 +1,8 @@
-#seed.py
+# seed.py
 from faker import Faker
-from models import db, User, Patent, Utility, Novelty, Obviousness
-from app import create_app
+from .models import db, User, Patent, Utility, Novelty, Obviousness, PriorArt
+from .app import create_app
+from .utils import fetch_patent_grants
 
 fake = Faker()
 
@@ -14,7 +15,11 @@ def create_users(num_users=10):
         )
         users.append(user)
         db.session.add(user)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating users: {e}")
     return users
 
 def create_patents(users, num_patents=20):
@@ -24,11 +29,38 @@ def create_patents(users, num_patents=20):
         patent = Patent(
             title=fake.sentence(nb_words=6),
             description=fake.text(max_nb_chars=200),
-            user_id=user.id  # Set the user_id explicitly
+            user_id=user.id
         )
+
+        # Many-to-Many Relationship: Assign patent to 1-3 random users
+        num_users_for_patent = fake.random_int(min=1, max=3)
+        for _ in range(num_users_for_patent):
+            patent.users.append(fake.random_element(users))
+
         patents.append(patent)
         db.session.add(patent)
-    db.session.commit()
+
+        # Prior Art: Fetch and store prior art
+        try:
+            prior_art_data = fetch_patent_grants(patent.description)
+            if prior_art_data:
+                for data in prior_art_data:
+                    prior_art = PriorArt(
+                        patent_number=data['patent_number'],
+                        title=data['title'],
+                        abstract=data['abstract'],
+                        url=data['url'],
+                        patent_id=patent.id
+                    )
+                    db.session.add(prior_art)
+        except Exception as e:
+            print(f"Error fetching/storing prior art: {e}")
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating patents: {e}")
     return patents
 
 def create_utilities(patents):
@@ -40,7 +72,11 @@ def create_utilities(patents):
             patent_id=patent.id
         )
         db.session.add(utility)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating utilities: {e}")
 
 def create_novelties(patents):
     for patent in patents:
@@ -55,7 +91,11 @@ def create_novelties(patents):
             patent_id=patent.id
         )
         db.session.add(novelty)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating novelties: {e}")
 
 def create_obviousnesses(patents):
     for patent in patents:
@@ -67,7 +107,11 @@ def create_obviousnesses(patents):
             patent_id=patent.id
         )
         db.session.add(obviousness)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating obviousnesses: {e}")
 
 def seed_database():
     app = create_app()

@@ -2,11 +2,13 @@ from flask import request, jsonify, make_response
 from flask_restful import Resource, reqparse
 import os
 import requests
-from models import db, User, Patent, Novelty, Utility, Obviousness, PriorArt
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, unset_jwt_cookies, set_access_cookies
-from utils import fetch_patent_grants
+from .models import db, User, Patent, Novelty, Utility, Obviousness, PriorArt
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, set_refresh_cookies, unset_jwt_cookies
+from .utils import fetch_patent_grants
 from flask_cors import cross_origin
 from sqlalchemy.exc import IntegrityError
+from datetime import timedelta
+
 
 import spacy
 
@@ -90,6 +92,18 @@ class UserResource(Resource):
     @cross_origin()
     def options(self):
         return '', 200
+    
+class AllUsersResource(Resource):
+    @jwt_required()
+    @cross_origin()
+    def get(self):
+        users = User.query.all()
+        if users:
+            usernames = [user.username for user in users]
+            return {'usernames': usernames}, 200
+        return {'message': 'No users found'}, 404
+
+
 
 class LoginResource(Resource):
     @cross_origin()
@@ -101,9 +115,25 @@ class LoginResource(Resource):
 
         user = User.query.filter_by(username=args['username']).first()
         if user and user.password == args['password']:
-            access_token = create_access_token(identity=user.id)
-            return {'access_token': access_token}, 200
+            access_token = create_access_token(identity=user.id, expires_delta=timedelta(minutes=120))  # Short-lived access token
+            refresh_token = create_refresh_token(identity=user.id, expires_delta=timedelta(days=90))  # Long-lived refresh token
+            response = jsonify(access_token=access_token, refresh_token=refresh_token)
+            set_refresh_cookies(response, refresh_token)  # Set refresh token as cookie
+            return response, 200
         return {'message': 'Invalid credentials'}, 401
+
+    @cross_origin()
+    def options(self):
+        return '', 200
+
+class TokenRefreshResource(Resource):
+    @jwt_required(refresh=True)
+    @cross_origin()
+    def post(self):
+        current_user = get_jwt_identity()
+        new_access_token = create_access_token(identity=current_user, expires_delta=timedelta(minutes=60))
+        response = jsonify(access_token=new_access_token)
+        return response, 200
 
     @cross_origin()
     def options(self):
@@ -124,21 +154,48 @@ class LogoutResource(Resource):
 
 
 class PatentResource(Resource):
+    
     @jwt_required()
     @cross_origin()
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument('title', required=True, help="Title cannot be blank!")
         parser.add_argument('description', required=True, help="Description cannot be blank!")
+        parser.add_argument('users', type=list, location='json', required=False, default=[])
         args = parser.parse_args()
 
         user_id = get_jwt_identity()
-        new_patent = Patent(title=args['title'], description=args['description'], user_id=user_id)
+        new_patent = Patent(
+            title=args['title'],
+            description=args['description'],
+            status='Pending',
+            user_id=user_id
+        )
         db.session.add(new_patent)
         db.session.commit()
 
-        return {'message': 'Patent created successfully'}, 201
+        # Add users to the patent
+        for username in args['users']:
+            user = User.query.filter_by(username=username).first()
+            if user:
+                new_patent.users.append(user)
+                db.session.commit()
+            else:
+                # Handle the case where a user is not found (optional)
+                return {'message': f'User not found: {username}'}, 404
 
+        # Check if any users were added AFTER the loop
+        if not new_patent.users:  # Check if the patent has any associated users
+            return {'message': 'Patent created successfully, but no users were added.'}, 201
+
+        # Return success if at least one user was added
+        return {
+            'message': 'Patent created successfully',
+            'patent_id': new_patent.id,
+            'created_by': user.username,  # This will be the last user added
+            'users': [user.username for user in new_patent.users]
+        }, 201
+        
     @jwt_required()
     @cross_origin()
     def get(self, patent_id=None):

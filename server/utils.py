@@ -3,13 +3,17 @@
 
 import requests
 
+
 def fetch_patent_grants(keywords):
-    url = "https://developer.uspto.gov/ibd-api/v1/application/grants"
-    params = {
+    from app import create_app  # Import here, inside the function
+    app = create_app()
+    with app.app_context():
+        url = "https://developer.uspto.gov/ibd-api/v1/application/grants"
+        params = {
         "searchText": keywords,
         "start": 0,
         "rows": 10
-    }
+        }
     response = requests.get(url, params=params)
     if response.status_code == 200:
         results = response.json().get('results', [])
@@ -33,6 +37,7 @@ def fetch_patent_grants(keywords):
 
 
 def search_case_law(keywords):
+    from app import create_app
     url = f'https://api.harvard.edu/federal-patent-caselaw?query={" ".join(keywords)}'
     headers = {
         'Authorization': 'Bearer your_harvard_api_key'

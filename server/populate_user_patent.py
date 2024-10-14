@@ -1,5 +1,5 @@
-from app import create_app  # Import your Flask app factory function
-from models import db, User, Patent
+from .app import create_app  # Import your Flask app factory function
+from .models import db, User, Patent
 
 def populate_user_patent():
     # Assuming you have the first 10 users and 20 patents already in the database

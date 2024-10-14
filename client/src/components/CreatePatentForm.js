@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 import { UserContext } from '../context/UserContext';
@@ -7,16 +7,28 @@ const CreatePatentForm = ({ onPatentCreated }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('Pending');
-  const [inventors, setInventors] = useState([]);
+  const [users, setUsers] = useState([]);
   const [newUsername, setNewUsername] = useState('');
-  const navigate = useNavigate();
+  const [patentId, setPatentId] = useState(null); 
   const { user } = useContext(UserContext);
+  const navigate = useNavigate();
 
-  const handleAddInventor = () => {
-    if (newUsername && !inventors.includes(newUsername)) {
-      setInventors([...inventors, newUsername]);
+  useEffect(() => {
+    if (user?.username && !users.includes(user.username)) {
+      setUsers([user.username, ...users]);
+    }
+  }, [user, users]);
+
+  const handleAddUser = () => {
+    if (newUsername && !users.includes(newUsername)) {
+      setUsers([...users, newUsername]);
       setNewUsername('');
     }
+  };
+
+  const handleRemoveUser = (username) => {
+    if (!username) return;
+    setUsers(users.filter(user => user !== username));
   };
 
   const handleSubmit = async (e) => {
@@ -26,7 +38,7 @@ const CreatePatentForm = ({ onPatentCreated }) => {
         title,
         description,
         status,
-        inventors: [user.username, ...inventors]
+        users: users 
       };
 
       const response = await axiosInstance.post('/patents', createData, {
@@ -34,10 +46,20 @@ const CreatePatentForm = ({ onPatentCreated }) => {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
-      onPatentCreated(response.data.patent_id);
-      navigate('/dashboard'); // Redirect to the dashboard
+
+      const newPatentId = response.data.id; 
+      setPatentId(newPatentId); 
+      if (newPatentId) {
+        onPatentCreated(newPatentId);
+        navigate('/dashboard');
+      } else {
+        console.error('No patent ID received:', newPatentId);
+      }
     } catch (error) {
       console.error('Error creating patent', error);
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+      }
     }
   };
 
@@ -62,17 +84,21 @@ const CreatePatentForm = ({ onPatentCreated }) => {
         </select>
       </div>
       <div>
-        <label>Additional Inventors:</label>
+        <label>Additional Users:</label>
         <input
           type="text"
           value={newUsername}
           onChange={(e) => setNewUsername(e.target.value)}
         />
-        <button type="button" onClick={handleAddInventor}>Add Inventor</button>
+        <button type="button" onClick={handleAddUser}>Add User</button>
         <ul>
-          <li>{user.username} (Current User)</li>
-          {inventors.map((inventor, index) => (
-            <li key={index}>{inventor}</li>
+          {users.map((username, index) => (
+            <li key={index}>
+              {username} 
+              {username !== user?.username && (
+                <button type="button" onClick={() => handleRemoveUser(username)}>Remove</button>
+              )}
+            </li>
           ))}
         </ul>
       </div>
@@ -82,4 +108,3 @@ const CreatePatentForm = ({ onPatentCreated }) => {
 };
 
 export default CreatePatentForm;
-

@@ -1,5 +1,5 @@
-from app import create_app  # Import your Flask app factory function
-from models import db, Patent, Novelty, Utility, Obviousness
+from .app import create_app  # Import your Flask app factory function
+from .models import db, Patent, Novelty, Utility, Obviousness
 
 def calculate_and_populate_scores():
     # Fetch the first 20 patents
