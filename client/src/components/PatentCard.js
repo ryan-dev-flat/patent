@@ -12,6 +12,8 @@ const PatentCard = ({ patent, onDelete }) => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        setUsers(patent.users);  // Initialize users from patent prop
+    
         const fetchAdditionalData = async () => {
             try {
                 const priorArtResponse = await axiosInstance.get(`/patents/${patent.id}/prior_art`, {
@@ -20,47 +22,40 @@ const PatentCard = ({ patent, onDelete }) => {
                     }
                 });
                 setPriorArt(priorArtResponse.data.prior_art);
-
+    
                 const utilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/utility`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
                 setUtility(utilityResponse.data);
-
+    
                 const noveltyResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/novelty`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
                 setNovelty(noveltyResponse.data);
-
+    
                 const obviousnessResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/obviousness`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
                 setObviousness(obviousnessResponse.data);
-
+    
                 const patentabilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/patentability_score`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
                 setPatentability(patentabilityResponse.data);
-
-                const patentResponse = await axiosInstance.get(`/patents/${patent.id}`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-                setUsers(patentResponse.data.users);
             } catch (error) {
                 console.error('Error fetching additional data', error);
             }
         };
         fetchAdditionalData();
-    }, [patent.id]);
+    }, [patent.id, patent.users]);  // Depend on patent.users to keep them in sync
 
     const handleDelete = async (id) => {
         try {

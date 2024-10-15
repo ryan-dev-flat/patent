@@ -1,4 +1,4 @@
-from app import create_app  # Import your Flask app factory function
+from app import create_app  
 from models import db, Patent, PriorArt
 from utils import fetch_patent_grants
 

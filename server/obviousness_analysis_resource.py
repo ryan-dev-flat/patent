@@ -1,7 +1,7 @@
 from flask import jsonify, request
 from flask_restful import Resource
 
-from .models import Obviousness, Patent, db
+from models import Obviousness, Patent, db
 
 
 class ObviousnessAnalysisResource(Resource):

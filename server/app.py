@@ -1,20 +1,21 @@
 #app.py
-from flask import Flask, jsonify
+from flask import Flask
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
-from .config import Config
+from models import db
+from config import Config
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    from .models import db   
+
     db.init_app(app)
-    migrate = Migrate(app, db)
-    jwt = JWTManager(app)
+    app.migrate = Migrate(app, db)
+    app.jwt = JWTManager(app)
     CORS(app, resources={r"/*": {"origins": "http://172.19.87.107:3000"}}, supports_credentials=True)
 
-    from .routes import main as main_blueprint
+    from routes import main as main_blueprint
     app.register_blueprint(main_blueprint, url_prefix='/api')
 
     # Handle OPTIONS requests
@@ -30,4 +31,5 @@ def create_app():
 if __name__ == '__main__':
     app = create_app()
     app.run(debug=True)
+
 
