@@ -179,7 +179,7 @@ const PatentCard = ({ patent, onDelete }) => {
                 <Link to={`/patents/${patent.id}/update`}>
                     <button>Update</button>
                 </Link>
-                <Link to={`/patents/${patent.id}/analysis`}>Deep Analysis</Link>
+                {/* <Link to={`/patents/${patent.id}/analysis`}>Deep Analysis</Link> */}
                 <button onClick={() => handleDelete(patent.id)}>Delete</button>
             </div>
 

@@ -7,7 +7,7 @@ import Register from './components/Register';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import PatentCards from './components/PatentCard';
-import PatentabilityAnalysis from './components/PatentabilityAnalysis';
+// import DeepPatentabilityAnalysis from './components/PatentabilityAnalysis';
 import PriorArtComponent from './components/PriorArtComponent';
 
 import Logout from './components/Logout';
@@ -35,7 +35,7 @@ function App() {
             <Route path="/patents/:patentId/update" element={<UpdatePatentForm />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/patents" element={<PatentCards />} />
-            <Route path="/patents/:id/analysis" element={<PatentabilityAnalysis />} />
+            {/* <Route path="/patents/:id/analysis" element={<DeepPatentabilityAnalysis />} /> */}
             <Route path="/patents/:id/prior-art" element={<PriorArtComponent />} />
             <Route path="/logout" element={<Logout />} />
             <Route path="/user-account" element={<UserAccount />} />

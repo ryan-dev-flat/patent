@@ -1,9 +1,9 @@
-// src/PatentabilityAnalysis.js
+// src/DeepPatentabilityAnalysis.js
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 
-const PatentabilityAnalysis = () => {
+const DeepPatentabilityAnalysis = () => {
   const { id } = useParams();
   const [analysis, setAnalysis] = useState({});
 
@@ -35,5 +35,5 @@ const PatentabilityAnalysis = () => {
   );
 };
 
-export default PatentabilityAnalysis;
+export default DeepPatentabilityAnalysis;
 
