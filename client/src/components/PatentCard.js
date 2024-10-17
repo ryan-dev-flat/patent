@@ -9,7 +9,7 @@ const PatentCard = ({ patent, onDelete }) => {
     const [loadingPriorArt, setLoadingPriorArt] = useState(true);
     const [errorPriorArt, setErrorPriorArt] = useState(null);
     const [showUpdateForm, setShowUpdateForm] = useState(false);
-    
+
     // States for utility, novelty, obviousness, and patentability scores
     const [utility, setUtility] = useState({});
     const [novelty, setNovelty] = useState({});
@@ -19,14 +19,18 @@ const PatentCard = ({ patent, onDelete }) => {
     // State to toggle prior art visibility
     const [showPriorArt, setShowPriorArt] = useState(false);
 
+    // Toggle state for score details
+    const [showUtilityDetails, setShowUtilityDetails] = useState(false);
+    const [showNoveltyDetails, setShowNoveltyDetails] = useState(false);
+    const [showObviousnessDetails, setShowObviousnessDetails] = useState(false);
+    const [showPatentabilityDetails, setShowPatentabilityDetails] = useState(false);
+
     const navigate = useNavigate();
 
     useEffect(() => {
         if (patent && patent.users) {
             setUsers(patent.users);
         }
-        console.log('Patent:', patent);
-        console.log('Users:', patent.users);
 
         const fetchAdditionalData = async () => {
             try {
@@ -40,7 +44,6 @@ const PatentCard = ({ patent, onDelete }) => {
                 if (priorArtResponse.data.prior_art && priorArtResponse.data.prior_art.length > 0) {
                     setPriorArt(priorArtResponse.data.prior_art);
                 } else {
-                    // If no prior art found, trigger a new search
                     const searchResponse = await axiosInstance.post(`/patents/${patent.id}/prior_art`, null, {
                         headers: {
                             Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -59,39 +62,39 @@ const PatentCard = ({ patent, onDelete }) => {
             try {
                 const utilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/utility`, {
                     headers: {
-                      Authorization: `Bearer ${localStorage.getItem('token')}`
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
-                  });
-                  setUtility(utilityResponse.data);
-          
-                  const noveltyResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/novelty`, {
+                });
+                setUtility(utilityResponse.data);
+
+                const noveltyResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/novelty`, {
                     headers: {
-                      Authorization: `Bearer ${localStorage.getItem('token')}`
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
-                  });
-                  setNovelty(noveltyResponse.data);
-          
-                  const obviousnessResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/obviousness`, {
+                });
+                setNovelty(noveltyResponse.data);
+
+                const obviousnessResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/obviousness`, {
                     headers: {
-                      Authorization: `Bearer ${localStorage.getItem('token')}`
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
-                  });
-                  setObviousness(obviousnessResponse.data);
-          
-                  const patentabilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/patentability_score`, {
+                });
+                setObviousness(obviousnessResponse.data);
+
+                const patentabilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/patentability_score`, {
                     headers: {
-                      Authorization: `Bearer ${localStorage.getItem('token')}`
+                        Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
-                  });
-                  setPatentability(patentabilityResponse.data);
+                });
+                setPatentability(patentabilityResponse.data);
             } catch (error) {
                 console.error('Error fetching analysis data', error);
             }
         };
-    
+
         fetchAdditionalData();
     }, [patent.id, patent.users]);
-    
+
     const handleDelete = async (id) => {
         try {
             await axiosInstance.delete(`/patents/${id}`, {
@@ -105,9 +108,16 @@ const PatentCard = ({ patent, onDelete }) => {
         }
     };
 
-     // Function to toggle prior art visibility
-     const togglePriorArt = () => {
+    const togglePriorArt = () => {
         setShowPriorArt(prevState => !prevState);
+    };
+
+    // Calculate patentability likelihood based on score
+    const getPatentabilityLikelihood = (score) => {
+        if (score >= 0.8) return "Highly Likely";
+        if (score >= 0.5) return "Moderately Likely";
+        if (score >= 0.3) return "Uncertain";
+        return "Not Likely";
     };
 
     if (showUpdateForm) {
@@ -123,37 +133,61 @@ const PatentCard = ({ patent, onDelete }) => {
             <p>Created by: {patent.created_by}</p>
             <p>Users: {users.length > 0 ? users.join(', ') : 'No users assigned'}</p>
 
-            {/* Display utility, novelty, obviousness, and patentability scores */}
+            {/* Display utility, novelty, obviousness, and patentability scores with conditional rendering */}
             <p>
-                Utility Score: <Link to={`/patents/${patent.id}/analysis/utility`}>{utility.utility_score || 'N/A'}</Link>
+                <Link to="#" onClick={() => setShowUtilityDetails(!showUtilityDetails)}>Utility Score:</Link> {utility.utility_score || 'N/A'}
+                {showUtilityDetails && (
+                    <div>
+                        <p><strong>Operable:</strong> {utility.operable ? 'Yes' : 'No'}</p>
+                        <p><strong>Useful:</strong> {utility.useful ? 'Yes' : 'No'}</p>
+                        <p><strong>Practical:</strong> {utility.practical ? 'Yes' : 'No'}</p>
+                    </div>
+                )}
             </p>
             <p>
-                Novelty Score: <Link to={`/patents/${patent.id}/analysis/novelty`}>{novelty.novelty_score || 'N/A'}</Link>
+                <Link to="#" onClick={() => setShowNoveltyDetails(!showNoveltyDetails)}>Novelty Score:</Link> {novelty.novelty_score || 'N/A'}
+                {showNoveltyDetails && (
+                    <div>
+                        <p><strong>New Invention:</strong> {novelty.new_invention ? 'Yes' : 'No'}</p>
+                        <p><strong>Not Publicly Disclosed:</strong> {novelty.not_publicly_disclosed ? 'Yes' : 'No'}</p>
+                        <p><strong>Not Described in Printed Publication:</strong> {novelty.not_described_in_printed_publication ? 'Yes' : 'No'}</p>
+                        <p><strong>Not in Public Use:</strong> {novelty.not_in_public_use ? 'Yes' : 'No'}</p>
+                        <p><strong>Not on Sale:</strong> {novelty.not_on_sale ? 'Yes' : 'No'}</p>
+                    </div>
+                )}
             </p>
             <p>
-                Obviousness Score: <Link to={`/patents/${patent.id}/analysis/obviousness`}>{obviousness.obviousness_score || 'N/A'}</Link>
+                <Link to="#" onClick={() => setShowObviousnessDetails(!showObviousnessDetails)}>Obviousness Score:</Link> {obviousness.obviousness_score || 'N/A'}
+                {showObviousnessDetails && (
+                    <div>
+                        <p><strong>Scope of Prior Art:</strong> {obviousness.scope_of_prior_art}</p>
+                        <p><strong>Differences from Prior Art:</strong> {obviousness.differences_from_prior_art}</p>
+                        <p><strong>Level of Ordinary Skill:</strong> {obviousness.level_of_ordinary_skill}</p>
+                    </div>
+                )}
             </p>
             <p>
-                Patentability Score: <Link to={`/patents/${patent.id}/analysis/patentability_score`}>{patentability.patentability_score || 'N/A'}</Link>
+                <Link to="#" onClick={() => setShowPatentabilityDetails(!showPatentabilityDetails)}>Patentability Score:</Link> {patentability.patentability_score || 'N/A'}
+                {showPatentabilityDetails && (
+                    <div>
+                        <p><strong>Patentability Likelihood:</strong> {getPatentabilityLikelihood(patentability.patentability_score)}</p>
+                    </div>
+                )}
             </p>
 
             <div>
                 <Link to={`/patents/${patent.id}/update`}>
                     <button>Update</button>
                 </Link>
-                
-                
                 <Link to={`/patents/${patent.id}/analysis`}>Analyze</Link>
                 <button onClick={() => handleDelete(patent.id)}>Delete</button>
             </div>
 
             <div>
-                {/* Button to toggle prior art */}
                 <button onClick={togglePriorArt}>
                     {showPriorArt ? 'Hide Prior Art' : 'Show Prior Art'}
                 </button>
 
-                {/* Conditional rendering of prior art */}
                 {showPriorArt && (
                     <div>
                         <h3>Prior Art</h3>
