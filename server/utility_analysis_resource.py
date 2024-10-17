@@ -9,8 +9,8 @@ class UtilityAnalysisResource(Resource):
         utility = Utility.query.filter_by(patent_id=patent_id).first_or_404()
         return jsonify({
             'id': utility.id,
-            'operability': utility.operability,
-            'beneficial': utility.beneficial,
+            'operable': utility.operable,
+            'useful': utility.useful,
             'practical': utility.practical,
             'utility_score': utility.utility_score,
             'patent_id': utility.patent_id
@@ -19,7 +19,7 @@ class UtilityAnalysisResource(Resource):
     def post(self, patent_id):
         data = request.get_json()
         utility = Utility(
-            operability=data.get('operability'),
+            operable=data.get('operable'),
             beneficial=data.get('beneficial'),
             practical=data.get('practical'),
             patent_id=patent_id
@@ -36,8 +36,8 @@ class UtilityAnalysisResource(Resource):
     def patch(self, patent_id):
         utility = Utility.query.filter_by(patent_id=patent_id).first_or_404()
         data = request.get_json()
-        if 'operability' in data:
-            utility.operability = data['operability']
+        if 'operable' in data:
+            utility.operability = data['operable']
         if 'beneficial' in data:
             utility.beneficial = data['beneficial']
         if 'practical' in data:

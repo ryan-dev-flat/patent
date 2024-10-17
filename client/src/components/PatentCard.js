@@ -9,6 +9,8 @@ const PatentCard = ({ patent, onDelete }) => {
     const [loadingPriorArt, setLoadingPriorArt] = useState(true);
     const [errorPriorArt, setErrorPriorArt] = useState(null);
     const [showUpdateForm, setShowUpdateForm] = useState(false);
+    
+    // States for utility, novelty, obviousness, and patentability scores
     const [utility, setUtility] = useState({});
     const [novelty, setNovelty] = useState({});
     const [obviousness, setObviousness] = useState({});
@@ -22,7 +24,7 @@ const PatentCard = ({ patent, onDelete }) => {
         }
         console.log('Patent:', patent);
         console.log('Users:', patent.users);
-    
+
         const fetchAdditionalData = async () => {
             try {
                 // Fetch prior art
@@ -49,6 +51,39 @@ const PatentCard = ({ patent, onDelete }) => {
             } finally {
                 setLoadingPriorArt(false);
             }
+            
+            // Fetch utility, novelty, obviousness, and patentability scores
+            try {
+                const utilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/utility`, {
+                    headers: {
+                      Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                  });
+                  setUtility(utilityResponse.data);
+          
+                  const noveltyResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/novelty`, {
+                    headers: {
+                      Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                  });
+                  setNovelty(noveltyResponse.data);
+          
+                  const obviousnessResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/obviousness`, {
+                    headers: {
+                      Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                  });
+                  setObviousness(obviousnessResponse.data);
+          
+                  const patentabilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/patentability_score`, {
+                    headers: {
+                      Authorization: `Bearer ${localStorage.getItem('token')}`
+                    }
+                  });
+                  setPatentability(patentabilityResponse.data);
+            } catch (error) {
+                console.error('Error fetching analysis data', error);
+            }
         };
     
         fetchAdditionalData();
@@ -66,9 +101,11 @@ const PatentCard = ({ patent, onDelete }) => {
             console.error('Error deleting patent', error);
         }
     };
+
     if (showUpdateForm) {
         return <UpdatePatentForm patentId={patent.id} />;
-      }
+    }
+
     return (
         <div className="patent-card">
             <h2>{patent.title}</h2>
@@ -76,9 +113,9 @@ const PatentCard = ({ patent, onDelete }) => {
             <p>Status: {patent.status}</p>
             <p>Patent ID: {patent.id}</p>
             <p>Created by: {patent.created_by}</p>
-            {/* Ensure users array is not empty before joining */}
             <p>Users: {users.length > 0 ? users.join(', ') : 'No users assigned'}</p>
 
+            {/* Display utility, novelty, obviousness, and patentability scores */}
             <p>
                 Utility Score: <Link to={`/patents/${patent.id}/analysis/utility`}>{utility.utility_score || 'N/A'}</Link>
             </p>
@@ -133,4 +170,3 @@ const PatentCard = ({ patent, onDelete }) => {
 };
 
 export default PatentCard;
-
