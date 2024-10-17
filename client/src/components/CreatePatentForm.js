@@ -46,7 +46,7 @@ const CreatePatentForm = ({ onPatentCreated }) => {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
       });
-      console.log('Response data:', response.data); // Add this to debug the response structure
+      console.log('Response data:', response.data); 
       const newPatentId = response.data.patent_id; 
       setPatentId(newPatentId); 
       if (newPatentId) {

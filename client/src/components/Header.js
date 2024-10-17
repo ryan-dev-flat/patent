@@ -1,10 +1,10 @@
 // src/components/Header.js
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { UserContext } from '../context/UserContext';  // Import UserContext
+import { UserContext } from '../context/UserContext';  
 
 const Header = () => {
-    const { user } = useContext(UserContext);  // Access the current user from the context
+    const { user } = useContext(UserContext);  
 
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light">
