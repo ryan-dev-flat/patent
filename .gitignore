@@ -6,6 +6,10 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+/client/src/package-lock.json
+/client/src/yarn.lock
+/client/node_modules/
+
 
 # Python dependencies and environments
 /.pnp
@@ -16,6 +20,8 @@ venv/
 ENV/
 *.egg-info/
 .Python
+server/__pycache__
+server/Pipfile.lock
 
 # Testing and coverage
 /coverage
@@ -70,3 +76,18 @@ data/
 
 # Model files
 *.model
+
+# Build outputs
+build/
+dist/
+
+allfileshas.txt
+
+server/.venv/lib
+server/.venv
+
+server/migrations/__pycache__/
+server/migrations/
+
+/client/yarn.lock
+/client/package-lock.json
