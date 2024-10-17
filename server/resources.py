@@ -9,6 +9,7 @@ from flask_cors import cross_origin
 from sqlalchemy.exc import IntegrityError
 from datetime import timedelta
 import logging
+import random
 
 
 # Resources
@@ -155,7 +156,70 @@ class LogoutResource(Resource):
     @cross_origin()
     def options(self):
         return '', 200
+    
 
+# Utility functions for generating random values and calculating scores
+def generate_random_utility(patent_id):
+    utility = Utility(
+        operable=random.choice([True, False]),
+        useful=random.choice([True, False]),
+        practical=random.choice([True, False]),
+        patent_id=patent_id
+    )
+    utility.calculate_utility_score()
+    db.session.add(utility)
+    return utility
+
+def generate_random_novelty(patent_id):
+    novelty = Novelty(
+        new_invention=random.choice([True, False]),
+        not_publicly_disclosed=random.choice([True, False]),
+        not_described_in_printed_publication=random.choice([True, False]),
+        not_in_public_use=random.choice([True, False]),
+        not_on_sale=random.choice([True, False]),
+        patent_id=patent_id
+    )
+    novelty.calculate_novelty_score()
+    db.session.add(novelty)
+    return novelty
+
+def generate_random_obviousness(patent_id):
+    obviousness = Obviousness(
+        scope_of_prior_art=random.choice(["Very similar", "Somewhat similar", "Different field"]),
+        differences_from_prior_art=random.choice(["Minor", "Moderate", "Significant"]),
+        level_of_ordinary_skill=random.choice(["High", "Medium", "Low"]),
+        secondary_considerations=random.choice([None, "Some considerations"]),
+        patent_id=patent_id
+    )
+    obviousness.calculate_obviousness_score()
+    db.session.add(obviousness)
+    return obviousness
+
+def calculate_patentability_score(novelty_score, utility_score, obviousness_score):
+    return (novelty_score * 0.4) + (utility_score * 0.3) + (obviousness_score * 0.3)
+
+def handle_patent_creation_or_update(patent_id):
+    # Generate random values for utility, novelty, and obviousness
+    utility = generate_random_utility(patent_id)
+    novelty = generate_random_novelty(patent_id)
+    obviousness = generate_random_obviousness(patent_id)
+
+    # Calculate patentability score
+    patentability_score = calculate_patentability_score(
+        novelty.novelty_score, utility.utility_score, obviousness.obviousness_score
+    )
+
+    # Find the patent and update its patentability score
+    patent = Patent.query.get(patent_id)
+    patent.patentability_score = patentability_score
+    db.session.commit()
+
+    return {
+        'novelty_score': novelty.novelty_score,
+        'utility_score': utility.utility_score,
+        'obviousness_score': obviousness.obviousness_score,
+        'patentability_score': patentability_score
+    }
 
 class PatentResource(Resource):
     
@@ -186,15 +250,16 @@ class PatentResource(Resource):
                 new_patent.users.append(user)
                 added_users.append(user.username)  # Track successfully added users
             else:
-                # You can log or handle this case if necessary
                 print(f"User not found: {username}")
         
         db.session.commit()  # Commit the added users
+
+        # Generate random values and calculate scores for utility, novelty, obviousness, and patentability
+        analysis_result = handle_patent_creation_or_update(new_patent.id)
         
-         # Trigger prior art search
+        # Trigger prior art search
         keywords = extract_keywords(f"{new_patent.title} {new_patent.description}")
         prior_art_data = fetch_patent_grants(keywords)
-
 
         # Store the fetched prior art
         for data in prior_art_data:
@@ -209,13 +274,14 @@ class PatentResource(Resource):
 
         db.session.commit()
 
-        # Return the response, including patent ID, added users, and prior art
+        # Return the response, including patent ID, added users, prior art, and analysis results
         return {
             'message': 'Patent created successfully',
             'patent_id': new_patent.id,
             'created_by': User.query.get(user_id).username,
             'users': added_users,
-            'prior_art': prior_art_data
+            'prior_art': prior_art_data,
+            'analysis': analysis_result  # Include the calculated scores
         }, 201
 
     @jwt_required()
@@ -291,6 +357,9 @@ class PatentResource(Resource):
                 )
                 db.session.add(prior_art)
 
+            # Generate random values and calculate scores for utility, novelty, obviousness, and patentability
+            analysis_result = handle_patent_creation_or_update(patent.id)
+
             db.session.commit()
 
             return {
@@ -301,10 +370,12 @@ class PatentResource(Resource):
                     'description': patent.description,
                     'status': patent.status,
                     'users': [{'id': user.id, 'username': user.username} for user in patent.users],
-                    'prior_art': prior_art_data
+                    'prior_art': prior_art_data,
+                    'analysis': analysis_result  # Include the calculated scores
                 }
             }, 200
         return {'message': 'Patent not found'}, 404
+
 
     @jwt_required()
     @cross_origin()
