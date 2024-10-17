@@ -6,7 +6,7 @@ const Home = () => {
         <div className="container mt-5">
             <h2>Welcome to the Patent Management System</h2>
             <p>
-                This is the home page. Use the navigation to explore the features of the system.
+                Register or Log In to explore the features of the system.
             </p>
         </div>
     );

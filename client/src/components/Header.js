@@ -1,8 +1,11 @@
 // src/components/Header.js
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { UserContext } from '../context/UserContext';  // Import UserContext
 
 const Header = () => {
+    const { user } = useContext(UserContext);  // Access the current user from the context
+
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light">
             <div className="container-fluid">
@@ -12,24 +15,33 @@ const Header = () => {
                 </button>
                 <div className="collapse navbar-collapse" id="navbarNav">
                     <ul className="navbar-nav">
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/dashboard">Dashboard</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/create-patent">Create Patent</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/user-account">User Account</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/login">Login</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/logout">Logout</Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link" to="/register">Register</Link> {/* Added Register Link */}
-                        </li>
+                        {user ? (
+                            <>
+                                {/* Show these links only when the user is logged in */}
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/dashboard">Dashboard</Link>
+                                </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/create-patent">Create Patent</Link>
+                                </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/user-account">User Account</Link>
+                                </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/logout">Logout</Link>
+                                </li>
+                            </>
+                        ) : (
+                            <>
+                                {/* Show only Login and Register links when the user is not logged in */}
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/login">Login</Link>
+                                </li>
+                                <li className="nav-item">
+                                    <Link className="nav-link" to="/register">Register</Link>
+                                </li>
+                            </>
+                        )}
                     </ul>
                 </div>
             </div>
@@ -38,4 +50,3 @@ const Header = () => {
 };
 
 export default Header;
-
