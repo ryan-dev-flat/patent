@@ -91,3 +91,13 @@ server/migrations/
 
 /client/yarn.lock
 /client/package-lock.json
+
+server/.venv/lib
+
+/server/Pipfile.lock
+
+server/.venv/lib64
+
+server/.venv/bin
+
+server/.venv
