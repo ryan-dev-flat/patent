@@ -16,6 +16,9 @@ const PatentCard = ({ patent, onDelete }) => {
     const [obviousness, setObviousness] = useState({});
     const [patentability, setPatentability] = useState({});
 
+    // State to toggle prior art visibility
+    const [showPriorArt, setShowPriorArt] = useState(false);
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -102,6 +105,11 @@ const PatentCard = ({ patent, onDelete }) => {
         }
     };
 
+     // Function to toggle prior art visibility
+     const togglePriorArt = () => {
+        setShowPriorArt(prevState => !prevState);
+    };
+
     if (showUpdateForm) {
         return <UpdatePatentForm patentId={patent.id} />;
     }
@@ -133,36 +141,45 @@ const PatentCard = ({ patent, onDelete }) => {
                 <Link to={`/patents/${patent.id}/update`}>
                     <button>Update</button>
                 </Link>
-                <Link to={`/patents/${patent.id}/prior_art`}>
-                    <button>Show Prior Art</button>
-                </Link>
+                
+                
                 <Link to={`/patents/${patent.id}/analysis`}>Analyze</Link>
                 <button onClick={() => handleDelete(patent.id)}>Delete</button>
             </div>
 
             <div>
-                <h3>Prior Art</h3>
-                {loadingPriorArt ? (
-                    <p>Loading prior art...</p>
-                ) : errorPriorArt ? (
-                    <p>{errorPriorArt}</p>
-                ) : priorArt && priorArt.length > 0 ? (
-                    <ul>
-                        {priorArt.map((art, index) => (
-                            <li key={index}>
-                                <p><strong>Title:</strong> {art.title}</p>
-                                <p><strong>Abstract:</strong> {art.abstract}</p>
-                                <p><strong>Patent Number:</strong> {art.patent_number}</p>
-                                {art.url && (
-                                    <a href={art.url} target="_blank" rel="noopener noreferrer">
-                                        View Full Patent
-                                    </a>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p>No prior art found.</p>
+                {/* Button to toggle prior art */}
+                <button onClick={togglePriorArt}>
+                    {showPriorArt ? 'Hide Prior Art' : 'Show Prior Art'}
+                </button>
+
+                {/* Conditional rendering of prior art */}
+                {showPriorArt && (
+                    <div>
+                        <h3>Prior Art</h3>
+                        {loadingPriorArt ? (
+                            <p>Loading prior art...</p>
+                        ) : errorPriorArt ? (
+                            <p>{errorPriorArt}</p>
+                        ) : priorArt && priorArt.length > 0 ? (
+                            <ul>
+                                {priorArt.map((art, index) => (
+                                    <li key={index}>
+                                        <p><strong>Title:</strong> {art.title}</p>
+                                        <p><strong>Abstract:</strong> {art.abstract}</p>
+                                        <p><strong>Patent Number:</strong> {art.patent_number}</p>
+                                        {art.url && (
+                                            <a href={art.url} target="_blank" rel="noopener noreferrer">
+                                                View Full Patent
+                                            </a>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p>No prior art found.</p>
+                        )}
+                    </div>
                 )}
             </div>
         </div>
