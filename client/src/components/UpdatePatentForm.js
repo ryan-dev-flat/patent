@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
+import { UserContext } from '../context/UserContext';
 
-const UpdatePatentForm = () => {
-  const { patentId } = useParams();
+const UpdatePatentForm = ({ onPatentUpdated = () => {} }) => {
+  const { patentId } = useParams(); // Get patentId from URL params
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('Pending');
   const [users, setUsers] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState([]);
   const [newUsername, setNewUsername] = useState('');
+  const [error, setError] = useState(null);
+  const { user } = useContext(UserContext);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,28 +26,52 @@ const UpdatePatentForm = () => {
         setTitle(patent.title);
         setDescription(patent.description);
         setStatus(patent.status);
-        setSelectedUsers(patent.users.map(user => user.id));
+        setUsers(patent.users.map(user => user.username));
       } catch (error) {
-        console.error('Error fetching patent', error);
-      }
-    };
-
-    const fetchUsers = async () => {
-      try {
-        const response = await axiosInstance.get('/users/all', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        setUsers(response.data);
-      } catch (error) {
-        console.error('Error fetching users', error);
+        console.error('Error fetching patent:', error);
       }
     };
 
     fetchPatent();
-    fetchUsers();
   }, [patentId]);
+
+  const handleAddUser = async () => {
+    if (newUsername && !users.includes(newUsername)) {
+      try {
+        // Send the username directly to the backend
+        await axiosInstance.post(`/patents/${patentId}/add_user`, { username: newUsername }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+  
+        setUsers([...users, newUsername]);
+        setNewUsername('');
+        console.log('Sending data:', { username: newUsername });
+      } catch (err) {
+        console.error('Error adding user to patent', err);
+        setError('Failed to add user to patent');
+      }
+    }
+  };
+  
+  
+
+  const handleRemoveUser = async (username) => {
+    try {
+      // Make API call to remove user from the patent
+      await axiosInstance.post(`/patents/${patentId}/remove_user`, { username }, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setUsers(users.filter(user => user !== username)); // Update local state
+    } catch (err) {
+      console.error('Error removing user from patent', err);
+      setError('Failed to remove user from patent');
+    }
+  };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,64 +80,26 @@ const UpdatePatentForm = () => {
         title,
         description,
         status,
-        user_ids: selectedUsers
+        users: users
       };
 
-      if (newUsername) {
-        updateData.username = newUsername;  // Include the new username if provided
+      const response = await axiosInstance.patch(`/patents/${patentId}`, updateData, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.data) {
+        onPatentUpdated(patentId);
+        navigate('/dashboard');
+      } else {
+        console.error('Error updating patent:', response.data);
       }
-
-      await axiosInstance.patch(`/patents/${patentId}`, updateData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      navigate('/dashboard'); // Redirect to the dashboard
     } catch (error) {
-      console.error('Error updating patent', error);
-    }
-  };
-
-  const handleAddUser = async () => {
-    try {
-      await axiosInstance.post(`/patents/${patentId}/add_user`, {
-        username: newUsername
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      setNewUsername('');
-      // Refresh the list of users associated with the patent
-      const response = await axiosInstance.get(`/patents/${patentId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      setSelectedUsers(response.data.users.map(user => user.id));
-    } catch (error) {
-      console.error('Error adding user to patent', error);
-    }
-  };
-
-  const handleRemoveUser = async (userId) => {
-    try {
-      await axiosInstance.post(`/patents/${patentId}/remove_user`, {
-        user_id: userId
-      }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      // Refresh the list of users associated with the patent
-      const response = await axiosInstance.get(`/patents/${patentId}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      setSelectedUsers(response.data.users.map(user => user.id));
-    } catch (error) {
-      console.error('Error removing user from patent', error);
+      console.error('Error updating patent:', error);
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+      }
     }
   };
 
@@ -136,24 +124,23 @@ const UpdatePatentForm = () => {
         </select>
       </div>
       <div>
-        
-      </div>
-      <div>
-        <label>Add User by Username:</label>
-        <input type="text" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} />
+        <label>Additional Users:</label>
+        <input
+          type="text"
+          value={newUsername}
+          onChange={(e) => setNewUsername(e.target.value)}
+        />
         <button type="button" onClick={handleAddUser}>Add User</button>
-      </div>
-      <div>
-        <h3>Current Users</h3>
-        {Array.isArray(users) && selectedUsers.map(userId => {
-          const user = users.find(user => user.id === userId);
-          return (
-            <div key={userId}>
-              <span>{user ? user.username : 'Unknown User'}</span>
-              <button type="button" onClick={() => handleRemoveUser(userId)}>Remove</button>
-            </div>
-          );
-        })}
+        <ul>
+          {users.map((username, index) => (
+            <li key={index}>
+              {username}
+              {username !== user?.username && (
+                <button type="button" onClick={() => handleRemoveUser(username)}>Remove</button>
+              )}
+            </li>
+          ))}
+        </ul>
       </div>
       <button type="submit">Update Patent</button>
     </form>

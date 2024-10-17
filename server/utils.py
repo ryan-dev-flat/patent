@@ -16,7 +16,6 @@ def extract_keywords(text):
 
 def fetch_patent_grants(keywords):
     url = "https://developer.uspto.gov/ibd-api/v1/application/grants"
-    
     params = {
         "searchText": keywords,
         "start": 0,
@@ -27,33 +26,28 @@ def fetch_patent_grants(keywords):
         results = response.json().get('results', [])
         patents = []
         for result in results:
-            if result:
-                patent = {
-                    'patent_number': result.get('patentApplicationNumber', ''),
-                    'title': result.get('inventionTitle', ''),
-                    'abstract': result.get('abstractText', [''])[0] if result.get('abstractText') else '',
-                    'url': result.get('filelocationURI', '')
-                }
-                patents.append(patent)
-        if not patents:
-            print(f"No patents found for keywords: {keywords}")
-            patents = generate_mock_patents(3)  # Generate 3 mock patents
-        return patents
+            patent = {
+                'patent_number': result.get('patentApplicationNumber', ''),
+                'title': result.get('inventionTitle', ''),
+                'abstract': result.get('abstractText', [''])[0] if result.get('abstractText') else '',
+                'url': result.get('filelocationURI', '')
+            }
+            patents.append(patent)
+        return patents if patents else generate_mock_patents(3)
     else:
         print(f"Error fetching patents: {response.status_code} - {response.text}")
-        return generate_mock_patents(3)  # Generate 3 mock patents in case of error
+        return generate_mock_patents(3)
 
 def generate_mock_patents(num_patents):
-    mock_patents = []
-    for _ in range(num_patents):
-        mock_patent = {
+    return [
+        {
             'patent_number': fake.unique.random_number(digits=8),
             'title': fake.sentence(nb_words=6),
             'abstract': fake.paragraph(nb_sentences=3),
             'url': fake.url()
         }
-        mock_patents.append(mock_patent)
-    return mock_patents
+        for _ in range(num_patents)
+    ]
 
 def search_case_law(keywords):
     from app import create_app

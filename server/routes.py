@@ -17,7 +17,7 @@ from resources import (
     PriorArtResource,
     TokenRefreshResource,
     UserResource,
-    
+    UserByUsernameResource
 )
 
 main = Blueprint('main', __name__)
@@ -27,8 +27,9 @@ api = Api(main)
 api.add_resource(UserResource, '/register', endpoint='user_register')
 api.add_resource(LoginResource, '/login', endpoint='user_login')
 api.add_resource(LogoutResource, '/logout', endpoint='user_logout')
-api.add_resource(UserResource, '/update_user', endpoint='user_update', methods=['PATCH'])
+api.add_resource(UserResource, '/update_user', endpoint='user_update', methods=['PATCH', 'GET', 'OPTIONS'])
 api.add_resource(UserResource, '/delete_account', endpoint='user_delete_account')
+api.add_resource(UserByUsernameResource, '/users', endpoint='user_by_username')
 
 # Patent-related endpoints
 api.add_resource(PatentResource, '/patents', endpoint='patent_create', methods=['POST'])

@@ -1,11 +1,13 @@
 from flask import request, jsonify
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_cors import cross_origin
 from models import db
 from models import User, Patent
 
 class RemoveUserFromPatentResource(Resource):
     @jwt_required()
+    @cross_origin()
     def post(self, patent_id):
         data = request.get_json()
         user_id = get_jwt_identity()
@@ -26,9 +28,14 @@ class RemoveUserFromPatentResource(Resource):
             return {'message': 'User not found'}, 404
 
         # Remove the user from the patent
-        if user_to_remove in patent.user:
-            patent.user.remove(user_to_remove)
+        if user_to_remove in patent.users:
+            patent.users.remove(user_to_remove)
             db.session.commit()
             return {'message': 'User removed from patent successfully'}, 200
         else:
             return {'message': 'User not associated with this patent'}, 400
+
+    @cross_origin()
+    def options(self):
+        return '', 200
+    

@@ -1,34 +1,47 @@
 from flask import request, jsonify
 from flask_restful import Resource
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_cors import cross_origin
 from models import db
 from models import User, Patent
+import logging
 
 class AddUserToPatentResource(Resource):
     @jwt_required()
+    @cross_origin()
     def post(self, patent_id):
-        data = request.get_json()
-        user_id = get_jwt_identity()
+        current_user = get_jwt_identity()
+        patent = Patent.query.filter_by(id=patent_id, user_id=current_user).first()
         
-        # Check if the patent exists and belongs to the current user
-        patent = Patent.query.filter_by(id=patent_id, user_id=user_id).first()
         if not patent:
-            return {'message': 'Patent not found or you do not have permission to modify it'}, 404
+            logging.warning(f"Patent not found or permission denied for user {current_user}")
+            return {'message': 'Patent not found or you do not have permission'}, 404
 
-        # Find the user to add by ID or username
-        user_to_add = None
-        if 'user_id' in data:
-            user_to_add = User.query.filter_by(id=data['user_id']).first()
-        elif 'username' in data:
-            user_to_add = User.query.filter_by(username=data['username']).first()
+        data = request.get_json()
+        print('Received data:', request.get_json())
+        username = data.get('username')
+        
+        if not username:
+            logging.warning("Username not provided in request")
+            return {'message': 'Username is required'}, 400
 
+        user_to_add = User.query.filter_by(username=username).first()
+        
         if not user_to_add:
+            logging.warning(f"User not found: {username}")
             return {'message': 'User not found'}, 404
 
-        # Add the user to the patent
-        if user_to_add not in patent.user:
-            patent.user.append(user_to_add)
-            db.session.commit()
-            return {'message': 'User added to patent successfully'}, 200
-        else:
-            return {'message': 'User already associated with this patent'}, 400
+        if user_to_add in patent.users:
+            logging.info(f"User {username} is already associated with patent {patent_id}")
+            return {'message': 'User is already associated with this patent'}, 400
+
+        patent.users.append(user_to_add)
+        db.session.commit()
+
+        logging.info(f"User {username} added to patent {patent_id}")
+        return {'message': 'User added to patent successfully'}, 200
+    
+    @cross_origin()
+    def options(self):
+        return '', 200
+    

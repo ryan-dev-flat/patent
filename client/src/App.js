@@ -8,6 +8,7 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import PatentCards from './components/PatentCard';
 import PatentabilityAnalysis from './components/PatentabilityAnalysis';
+import PriorArtComponent from './components/PriorArtComponent';
 
 import Logout from './components/Logout';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -35,7 +36,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/patents" element={<PatentCards />} />
             <Route path="/patents/:id/analysis" element={<PatentabilityAnalysis />} />
-
+            <Route path="/patents/:id/prior-art" element={<PriorArtComponent />} />
             <Route path="/logout" element={<Logout />} />
             <Route path="/user-account" element={<UserAccount />} />
           </Routes>

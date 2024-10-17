@@ -50,6 +50,8 @@ const Dashboard = () => {
         }
     };
 
+    
+
     useEffect(() => {
         fetchStats();
         fetchPatents();

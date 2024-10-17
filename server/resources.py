@@ -4,27 +4,12 @@ import os
 import requests
 from models import db, User, Patent, Novelty, Utility, Obviousness, PriorArt
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, set_refresh_cookies, unset_jwt_cookies
-from utils import fetch_patent_grants
+from utils import fetch_patent_grants, extract_keywords, generate_mock_patents
 from flask_cors import cross_origin
 from sqlalchemy.exc import IntegrityError
 from datetime import timedelta
+import logging
 
-
-import spacy
-
-# Initialize NLP model
-nlp = spacy.load("en_core_web_sm")
-
-# Helper functions
-def extract_keywords(text):
-    doc = nlp(text)
-    keywords = [token.text for token in doc if token.is_alpha and not token.is_stop]
-    return " ".join(keywords)
-
-# Helper function to search for prior art using the extracted keywords
-def search_prior_art(description):
-    keywords = extract_keywords(description)
-    return fetch_patent_grants(keywords)
 
 # Resources
 class UserResource(Resource):
@@ -102,6 +87,25 @@ class AllUsersResource(Resource):
             usernames = [user.username for user in users]
             return {'usernames': usernames}, 200
         return {'message': 'No users found'}, 404
+    @cross_origin()
+    def options(self):
+        return '', 200
+    
+class UserByUsernameResource(Resource):
+    @jwt_required()
+    def get(self):
+        username = request.args.get('username', '').strip()
+        logging.info(f"Searching for username: {username}")
+        if not username:
+            return {'message': 'Username is required'}, 400
+
+        user = User.query.filter_by(username=username).first()
+
+        if not user:
+            logging.info(f"User {username} not found in the database.")
+            return {'message': 'User not found'}, 404
+
+        return {'id': user.id, 'username': user.username}, 200
 
 
 
@@ -186,13 +190,32 @@ class PatentResource(Resource):
                 print(f"User not found: {username}")
         
         db.session.commit()  # Commit the added users
+        
+         # Trigger prior art search
+        keywords = extract_keywords(f"{new_patent.title} {new_patent.description}")
+        prior_art_data = fetch_patent_grants(keywords)
 
-        # Return the response, including patent ID and added users
+
+        # Store the fetched prior art
+        for data in prior_art_data:
+            prior_art = PriorArt(
+                patent_number=data['patent_number'],
+                title=data['title'],
+                abstract=data['abstract'],
+                url=data['url'],
+                patent_id=new_patent.id
+            )
+            db.session.add(prior_art)
+
+        db.session.commit()
+
+        # Return the response, including patent ID, added users, and prior art
         return {
             'message': 'Patent created successfully',
             'patent_id': new_patent.id,
-            'created_by': User.query.get(user_id).username,  # Fetch the creator's username
-            'users': added_users  # Users successfully added
+            'created_by': User.query.get(user_id).username,
+            'users': added_users,
+            'prior_art': prior_art_data
         }, 201
 
     @jwt_required()
@@ -233,6 +256,8 @@ class PatentResource(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('title', required=False)
         parser.add_argument('description', required=False)
+        parser.add_argument('status', required=False)
+        parser.add_argument('user_ids', type=list, location='json', required=False)
         args = parser.parse_args()
 
         user_id = get_jwt_identity()
@@ -242,8 +267,43 @@ class PatentResource(Resource):
                 patent.title = args['title']
             if args['description']:
                 patent.description = args['description']
+            if args['status']:
+                patent.status = args['status']
+            if args['user_ids']:
+                # Update users
+                patent.users = User.query.filter(User.id.in_(args['user_ids'])).all()
+            
             db.session.commit()
-            return {'message': 'Patent updated successfully'}, 200
+
+            # Trigger new prior art search
+            keywords = extract_keywords(f"{patent.title} {patent.description}")
+            prior_art_data = fetch_patent_grants(keywords)
+
+            # Clear existing prior art and store new results
+            PriorArt.query.filter_by(patent_id=patent_id).delete()
+            for data in prior_art_data:
+                prior_art = PriorArt(
+                    patent_number=data['patent_number'],
+                    title=data['title'],
+                    abstract=data['abstract'],
+                    url=data['url'],
+                    patent_id=patent_id
+                )
+                db.session.add(prior_art)
+
+            db.session.commit()
+
+            return {
+                'message': 'Patent updated successfully',
+                'patent': {
+                    'id': patent.id,
+                    'title': patent.title,
+                    'description': patent.description,
+                    'status': patent.status,
+                    'users': [{'id': user.id, 'username': user.username} for user in patent.users],
+                    'prior_art': prior_art_data
+                }
+            }, 200
         return {'message': 'Patent not found'}, 404
 
     @jwt_required()
@@ -332,27 +392,25 @@ class PatentabilityAnalysisResource(Resource):
     
 class PriorArtResource(Resource):
     @jwt_required()
+    @cross_origin()
     def post(self, patent_id):
         current_user = get_jwt_identity()
-        
+
         # Retrieve the patent belonging to the current user
         patent = Patent.query.filter_by(id=patent_id, user_id=current_user).first()
-        
         if not patent:
             return {'message': 'Patent not found or does not belong to the user'}, 404
-        
-        # Extract keywords from the patent description using spaCy
-        doc = nlp(patent.description)
-        keywords = [token.lemma_ for token in doc if not token.is_stop and token.is_alpha and len(token.text) > 2]
-        
-        # Use the most frequent keywords (adjust the number as needed)
-        top_keywords = " ".join(sorted(set(keywords), key=keywords.count, reverse=True)[:10])
-        
-        # Fetch and store prior art using the extracted keywords
-        prior_art_data = fetch_patent_grants(top_keywords)
-        
+
+        # Extract keywords from patent title and description
+        keywords = extract_keywords(f"{patent.title} {patent.description}")
+
+        # Fetch prior art data
+        prior_art_data = fetch_patent_grants(keywords)
+
         if not prior_art_data:
-            return {'message': 'No prior art found for this patent'}, 404
+    # Optionally generate mock patents here if needed
+            prior_art_data = generate_mock_patents(3)
+            return {'message': 'No prior art found, returning mock patents.', 'mock_patents': prior_art_data}, 200
         
         # Store the fetched prior art
         for data in prior_art_data:
@@ -364,20 +422,21 @@ class PriorArtResource(Resource):
                 patent_id=patent_id
             )
             db.session.add(prior_art)
-        
+
         db.session.commit()
-        
-        # Retrieve the stored prior art
+
+        # Return the fetched and stored prior art
         stored_prior_art = PriorArt.query.filter_by(patent_id=patent_id).all()
         prior_art_list = [{'patent_number': art.patent_number, 'title': art.title, 'abstract': art.abstract, 'url': art.url} for art in stored_prior_art]
-        
+
         return jsonify({
             'message': 'Prior art fetched and stored successfully',
-            'keywords_used': top_keywords,
+            'keywords_used': keywords,
             'prior_art': prior_art_list
         })
     
     @jwt_required()
+    @cross_origin()
     def get(self, patent_id):
         current_user = get_jwt_identity()
         
@@ -391,14 +450,20 @@ class PriorArtResource(Resource):
         prior_art = PriorArt.query.filter_by(patent_id=patent_id).all()
         
         if not prior_art:
-            return {'message': 'No prior art found for this patent'}, 404
+            return jsonify({'message': 'No prior art found for this patent'}), 200  # Changed to 200 OK
         
-        prior_art_list = [{'patent_number': art.patent_number, 'title': art.title, 'abstract': art.abstract, 'url': art.url} for art in prior_art]
+        prior_art_list = [
+            {
+                'patent_number': art.patent_number,
+                'title': art.title,
+                'abstract': art.abstract,
+                'url': art.url
+            }
+            for art in prior_art
+        ]
         
-        return jsonify({'prior_art': prior_art_list})
+        return jsonify({'prior_art': prior_art_list}), 200  # Added status code for clarity
 
     @cross_origin()
     def options(self):
         return '', 200
-
-

@@ -1,62 +1,59 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
+import UpdatePatentForm from './UpdatePatentForm';
 
 const PatentCard = ({ patent, onDelete }) => {
+    const [users, setUsers] = useState([]);
     const [priorArt, setPriorArt] = useState([]);
+    const [loadingPriorArt, setLoadingPriorArt] = useState(true);
+    const [errorPriorArt, setErrorPriorArt] = useState(null);
+    const [showUpdateForm, setShowUpdateForm] = useState(false);
     const [utility, setUtility] = useState({});
     const [novelty, setNovelty] = useState({});
     const [obviousness, setObviousness] = useState({});
     const [patentability, setPatentability] = useState({});
-    const [users, setUsers] = useState([]);
+
     const navigate = useNavigate();
 
     useEffect(() => {
-        setUsers(patent.users);  // Initialize users from patent prop
+        if (patent && patent.users) {
+            setUsers(patent.users);
+        }
+        console.log('Patent:', patent);
+        console.log('Users:', patent.users);
     
         const fetchAdditionalData = async () => {
             try {
+                // Fetch prior art
                 const priorArtResponse = await axiosInstance.get(`/patents/${patent.id}/prior_art`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`
                     }
                 });
-                setPriorArt(priorArtResponse.data.prior_art);
-    
-                const utilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/utility`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-                setUtility(utilityResponse.data);
-    
-                const noveltyResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/novelty`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-                setNovelty(noveltyResponse.data);
-    
-                const obviousnessResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/obviousness`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-                setObviousness(obviousnessResponse.data);
-    
-                const patentabilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/patentability_score`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
-                setPatentability(patentabilityResponse.data);
+                
+                if (priorArtResponse.data.prior_art && priorArtResponse.data.prior_art.length > 0) {
+                    setPriorArt(priorArtResponse.data.prior_art);
+                } else {
+                    // If no prior art found, trigger a new search
+                    const searchResponse = await axiosInstance.post(`/patents/${patent.id}/prior_art`, null, {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+                    setPriorArt(searchResponse.data.prior_art);
+                }
             } catch (error) {
                 console.error('Error fetching additional data', error);
+                setErrorPriorArt('Error fetching additional data');
+            } finally {
+                setLoadingPriorArt(false);
             }
         };
+    
         fetchAdditionalData();
-    }, [patent.id, patent.users]);  // Depend on patent.users to keep them in sync
-
+    }, [patent.id, patent.users]);
+    
     const handleDelete = async (id) => {
         try {
             await axiosInstance.delete(`/patents/${id}`, {
@@ -69,7 +66,9 @@ const PatentCard = ({ patent, onDelete }) => {
             console.error('Error deleting patent', error);
         }
     };
-
+    if (showUpdateForm) {
+        return <UpdatePatentForm patentId={patent.id} />;
+      }
     return (
         <div className="patent-card">
             <h2>{patent.title}</h2>
@@ -77,7 +76,9 @@ const PatentCard = ({ patent, onDelete }) => {
             <p>Status: {patent.status}</p>
             <p>Patent ID: {patent.id}</p>
             <p>Created by: {patent.created_by}</p>
-            <p>Users: {users.join(', ')}</p> {/* Rendering users */}
+            {/* Ensure users array is not empty before joining */}
+            <p>Users: {users.length > 0 ? users.join(', ') : 'No users assigned'}</p>
+
             <p>
                 Utility Score: <Link to={`/patents/${patent.id}/analysis/utility`}>{utility.utility_score || 'N/A'}</Link>
             </p>
@@ -90,24 +91,36 @@ const PatentCard = ({ patent, onDelete }) => {
             <p>
                 Patentability Score: <Link to={`/patents/${patent.id}/analysis/patentability_score`}>{patentability.patentability_score || 'N/A'}</Link>
             </p>
+
             <div>
                 <Link to={`/patents/${patent.id}/update`}>
                     <button>Update</button>
                 </Link>
-                <Link to={`/patents/${patent.id}/prior_art`}>Show Prior Art</Link>
+                <Link to={`/patents/${patent.id}/prior_art`}>
+                    <button>Show Prior Art</button>
+                </Link>
                 <Link to={`/patents/${patent.id}/analysis`}>Analyze</Link>
                 <button onClick={() => handleDelete(patent.id)}>Delete</button>
             </div>
+
             <div>
                 <h3>Prior Art</h3>
-                {priorArt.length > 0 ? (
+                {loadingPriorArt ? (
+                    <p>Loading prior art...</p>
+                ) : errorPriorArt ? (
+                    <p>{errorPriorArt}</p>
+                ) : priorArt && priorArt.length > 0 ? (
                     <ul>
                         {priorArt.map((art, index) => (
                             <li key={index}>
-                                <p>Title: {art.title}</p>
-                                <p>Abstract: {art.abstract}</p>
-                                <p>Patent Number: {art.patent_number}</p>
-                                <a href={art.url} target="_blank" rel="noopener noreferrer">View Patent</a>
+                                <p><strong>Title:</strong> {art.title}</p>
+                                <p><strong>Abstract:</strong> {art.abstract}</p>
+                                <p><strong>Patent Number:</strong> {art.patent_number}</p>
+                                {art.url && (
+                                    <a href={art.url} target="_blank" rel="noopener noreferrer">
+                                        View Full Patent
+                                    </a>
+                                )}
                             </li>
                         ))}
                     </ul>
@@ -120,3 +133,4 @@ const PatentCard = ({ patent, onDelete }) => {
 };
 
 export default PatentCard;
+
