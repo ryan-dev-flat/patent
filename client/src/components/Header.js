@@ -1,4 +1,3 @@
-// src/components/Header.js
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { UserContext } from '../context/UserContext';
@@ -13,8 +12,8 @@ const Header = () => {
         <button
           className="navbar-toggler"
           type="button"
-          data-bs-toggle="collapse" // Updated attribute
-          data-bs-target="#navbarNav" // Updated attribute
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
           aria-controls="navbarNav"
           aria-expanded="false"
           aria-label="Toggle navigation"
@@ -25,7 +24,6 @@ const Header = () => {
           <ul className="navbar-nav">
             {user ? (
               <>
-                {/* Show these links only when the user is logged in */}
                 <li className="nav-item">
                   <Link className="nav-link" to="/dashboard">Dashboard</Link>
                 </li>
@@ -41,7 +39,6 @@ const Header = () => {
               </>
             ) : (
               <>
-                {/* Show only Login and Register links when the user is not logged in */}
                 <li className="nav-item">
                   <Link className="nav-link" to="/login">Login</Link>
                 </li>
