@@ -15,7 +15,7 @@ const Register = ({ setToken }) => {
         try {
             const response = await axiosInstance.post('/register', { username, password });
             console.log('Response:', response); // Log the response
-            setToken(response.data.access_token); // Ensure setToken is passed as a prop
+            setToken(response.data.access_token); //  setToken is passed as a prop
             setSuccess('Registration successful! Please log in.');
             setTimeout(() => {
                 navigate('/login'); // Redirect to login page after 3 seconds

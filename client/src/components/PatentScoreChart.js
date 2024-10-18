@@ -5,10 +5,10 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const PatentScoreChart = ({ utility, novelty, obviousness, patentability, chartType }) => {
   const data = [
-    { name: 'Utility', value: utility.utility_score || 0 },
-    { name: 'Novelty', value: novelty.novelty_score || 0 },
-    { name: 'Non-Obviousness', value: 1 - (obviousness.obviousness_score || 0) },
-    { name: 'Patentability Overall', value: patentability.patentability_score || 0 },
+    { name: 'Utility', weighted: utility.utility_score || 0 },
+    { name: 'Novelty', weighted: novelty.novelty_score || 0 },
+    { name: 'Non-Obviousness', weighted: 1 - (obviousness.obviousness_score || 0) },
+    { name: 'Patentability Overall', weighted: patentability.patentability_score || 0 },
   ];
 
   const renderRadarChart = () => (
@@ -16,7 +16,7 @@ const PatentScoreChart = ({ utility, novelty, obviousness, patentability, chartT
       <PolarGrid />
       <PolarAngleAxis dataKey="name" />
       <PolarRadiusAxis angle={30} domain={[0, 1]} />
-      <Radar name="Patent Scores" dataKey="value" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+      <Radar name="Patent Scores" dataKey="weighted" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
     </RadarChart>
   );
 
@@ -27,7 +27,7 @@ const PatentScoreChart = ({ utility, novelty, obviousness, patentability, chartT
       <YAxis domain={[0, 1]} />
       <Tooltip />
       <Legend />
-      <Bar dataKey="value" fill="#8884d8" />
+      <Bar dataKey="weighted" fill="#8884d8" />
     </BarChart>
   );
 
@@ -40,7 +40,7 @@ const PatentScoreChart = ({ utility, novelty, obviousness, patentability, chartT
         labelLine={false}
         outerRadius={80}
         fill="#8884d8"
-        dataKey="value"
+        dataKey="weighted"
       >
         {data.map((entry, index) => (
           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
