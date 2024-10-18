@@ -1,11 +1,24 @@
 import React, { createContext, useState, useEffect } from 'react';
-import axiosInstance from '../utils/axiosInstance';
-
+import { jwtDecode } from 'jwt-decode';  // Import JWT decode library
 
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Check if token exists in localStorage and decode it
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const decodedUser = jwtDecode(token);
+        setUser(decodedUser);
+      } catch (error) {
+        console.error('Invalid token:', error);
+        localStorage.removeItem('token');
+      }
+    }
+  }, []);
 
   const login = (userData, token) => {
     setUser(userData);
@@ -23,3 +36,4 @@ export const UserProvider = ({ children }) => {
     </UserContext.Provider>
   );
 };
+

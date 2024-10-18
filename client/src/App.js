@@ -17,9 +17,11 @@ import UpdatePatentForm from './components/UpdatePatentForm';
 import UserAccount from './components/UserAccount';
 import { UserProvider } from './context/UserContext';
 
+
 function App() {
 
-  const [token, setToken] = useState('');
+  
+
 
   return (
     <UserProvider>
@@ -29,8 +31,8 @@ function App() {
         <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/register" element={<Register setToken={setToken} />} />
-            <Route path="/login" element={<Login setToken={setToken} />} />
+            <Route path="/register" element={<Register  />} />
+            <Route path="/login" element={<Login  />} />
             <Route path="/create-patent" element={<CreatePatentForm/>} />
             <Route path="/patents/:patentId/update" element={<UpdatePatentForm />} />
             <Route path="/dashboard" element={<Dashboard />} />

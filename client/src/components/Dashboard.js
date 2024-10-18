@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axiosInstance from '../utils/axiosInstance';
-import PatentCard from './PatentCard'; // Ensure this path is correct
-import CreatePatentForm from './CreatePatentForm'; // Ensure this path is correct
+import PatentCard from './PatentCard'; 
+import CreatePatentForm from './CreatePatentForm'; 
 
 const Dashboard = () => {
     const [stats, setStats] = useState({});
