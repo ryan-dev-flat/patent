@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 import UpdatePatentForm from './UpdatePatentForm';
+import PatentScoreChart from './PatentScoreChart'; 
 
 const PatentCard = ({ patent, onDelete }) => {
     const [users, setUsers] = useState([]);
@@ -24,6 +25,8 @@ const PatentCard = ({ patent, onDelete }) => {
     const [showNoveltyDetails, setShowNoveltyDetails] = useState(false);
     const [showObviousnessDetails, setShowObviousnessDetails] = useState(false);
     const [showPatentabilityDetails, setShowPatentabilityDetails] = useState(false);
+
+    const [chartType, setChartType] = useState('radar');
 
     const navigate = useNavigate();
 
@@ -120,6 +123,14 @@ const PatentCard = ({ patent, onDelete }) => {
         return "Not Likely";
     };
 
+    const handleChartTypeChange = (type) => {
+        setChartType(type);
+    };
+
+    if (showUpdateForm) {
+        return <UpdatePatentForm patentId={patent.id} />;
+    }
+
     if (showUpdateForm) {
         return <UpdatePatentForm patentId={patent.id} />;
     }
@@ -157,7 +168,7 @@ const PatentCard = ({ patent, onDelete }) => {
                 )}
             </p>
             <p>
-                <Link to="#" onClick={() => setShowObviousnessDetails(!showObviousnessDetails)}>Obviousness Score:</Link> {obviousness.obviousness_score || 'N/A'}
+                <Link to="#" onClick={() => setShowObviousnessDetails(!showObviousnessDetails)}>Non Obviousness Score:</Link> {obviousness.obviousness_score || 'N/A'}
                 {showObviousnessDetails && (
                     <div>
                         <p><strong>Scope of Prior Art:</strong> {obviousness.scope_of_prior_art}</p>
@@ -167,14 +178,28 @@ const PatentCard = ({ patent, onDelete }) => {
                 )}
             </p>
             <p>
-                <Link to="#" onClick={() => setShowPatentabilityDetails(!showPatentabilityDetails)}>Patentability Score:</Link> {patentability.patentability_score || 'N/A'}
+                <Link to="#" onClick={() => setShowPatentabilityDetails(!showPatentabilityDetails)}>Weighted Patentability Score:</Link> {patentability.patentability_score || 'N/A'}
                 {showPatentabilityDetails && (
                     <div>
                         <p><strong>Patentability Likelihood:</strong> {getPatentabilityLikelihood(patentability.patentability_score)}</p>
                     </div>
                 )}
             </p>
-
+            <div>
+                <h3>Patent Score Visualization</h3>
+                <div>
+                    <button onClick={() => handleChartTypeChange('radar')} className={chartType === 'radar' ? 'active' : ''}>Radar Chart</button>
+                    <button onClick={() => handleChartTypeChange('bar')} className={chartType === 'bar' ? 'active' : ''}>Bar Chart</button>
+                    <button onClick={() => handleChartTypeChange('pie')} className={chartType === 'pie' ? 'active' : ''}>Pie Chart</button>
+                </div>
+                <PatentScoreChart 
+                    utility={utility}
+                    novelty={novelty}
+                    obviousness={obviousness}
+                    patentability={patentability}
+                    chartType={chartType}
+                />
+                 </div>
             <div>
                 <Link to={`/patents/${patent.id}/update`}>
                     <button>Update</button>
