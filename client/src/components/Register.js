@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axiosInstance from '../utils/axiosInstance';
+import useAxios from '../utils/useAxios'; // Use useAxios hook
 import { useNavigate } from 'react-router-dom';
 
 const Register = ({ setToken }) => {
@@ -8,6 +8,7 @@ const Register = ({ setToken }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(''); 
   const navigate = useNavigate();
+  const axiosInstance = useAxios(); // Use Axios instance with token handling
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -30,31 +31,35 @@ const Register = ({ setToken }) => {
   };
 
   return (
-    <div>
+    <div className="container mt-5">
       <h2>Register</h2>
-      <form onSubmit={handleRegister}>
-        <div>
-          <label>Username:</label>
+      <form onSubmit={handleRegister} className="needs-validation">
+        <div className="mb-3">
+          <label htmlFor="username" className="form-label">Username:</label>
           <input
             type="text"
+            id="username"
+            className="form-control"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
           />
         </div>
-        <div>
-          <label>Password:</label>
+        <div className="mb-3">
+          <label htmlFor="password" className="form-label">Password:</label>
           <input
             type="password"
+            id="password"
+            className="form-control"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
-        <button type="submit">Register</button>
+        <button type="submit" className="btn btn-primary">Register</button>
       </form>
-      {error && <p>{error}</p>}
-      {success && <p>{success}</p>}
+      {error && <p className="text-danger mt-3">{error}</p>}
+      {success && <p className="text-success mt-3">{success}</p>}
     </div>
   );
 };

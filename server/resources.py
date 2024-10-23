@@ -22,7 +22,9 @@ class UserResource(Resource):
         args = parser.parse_args()
 
         # Check if the username already exists
-        if User.query.filter_by(username=args['username']).first():
+        existing_user = User.query.filter_by(username=args['username']).first()
+        if existing_user:
+            print(f"Username {args['username']} already exists.")
             return {'error': 'Username already exists'}, 400
 
         new_user = User(username=args['username'], password=args['password'])
@@ -31,10 +33,17 @@ class UserResource(Resource):
             db.session.commit()
             # Generate access token
             access_token = create_access_token(identity=args['username'])
+            print(f"User {args['username']} registered successfully.")
             return jsonify({"message": "User registered successfully", "access_token": access_token}), 201
-        except IntegrityError:
+        except IntegrityError as e:
             db.session.rollback()
+            print(f"IntegrityError: {e}")
             return {'error': 'Username already exists'}, 400
+        except Exception as e:
+            db.session.rollback()
+            print(f"Unexpected error: {e}")
+            return {'error': 'An unexpected error occurred'}, 500
+
 
     @jwt_required()
     @cross_origin()
@@ -122,7 +131,7 @@ class LoginResource(Resource):
         if user and user.password == args['password']:
             access_token = create_access_token(identity=user.id, expires_delta=timedelta(minutes=120))  # Short-lived access token
             refresh_token = create_refresh_token(identity=user.id, expires_delta=timedelta(days=90))  # Long-lived refresh token
-            response = jsonify(access_token=access_token, refresh_token=refresh_token)
+            response = jsonify(access_token=access_token)
             set_refresh_cookies(response, refresh_token)  # Set refresh token as cookie
             return response, 200
         return {'message': 'Invalid credentials'}, 401
@@ -136,7 +145,7 @@ class TokenRefreshResource(Resource):
     @cross_origin()
     def post(self):
         current_user = get_jwt_identity()
-        new_access_token = create_access_token(identity=current_user, expires_delta=timedelta(minutes=60))
+        new_access_token = create_access_token(identity=current_user, expires_delta=timedelta(minutes=120))
         response = jsonify(access_token=new_access_token)
         return response, 200
 
@@ -198,8 +207,21 @@ def generate_random_obviousness(patent_id):
 def calculate_patentability_score(novelty_score, utility_score, obviousness_score):
     return (novelty_score * 0.4) + (utility_score * 0.3) + (obviousness_score * 0.3)
 
-def handle_patent_creation_or_update(patent_id):
-    # Generate random values for utility, novelty, and obviousness
+def handle_patent_creation_or_update(patent_id, force_update=False):
+    # Remove old analysis data before creating new analysis
+    old_utility = Utility.query.filter_by(patent_id=patent_id).first()
+    old_novelty = Novelty.query.filter_by(patent_id=patent_id).first()
+    old_obviousness = Obviousness.query.filter_by(patent_id=patent_id).first()
+    
+    # Delete old entries if they exist
+    if old_utility:
+        db.session.delete(old_utility)
+    if old_novelty:
+        db.session.delete(old_novelty)
+    if old_obviousness:
+        db.session.delete(old_obviousness)
+
+    # Create new analysis objects
     utility = generate_random_utility(patent_id)
     novelty = generate_random_novelty(patent_id)
     obviousness = generate_random_obviousness(patent_id)
@@ -209,7 +231,7 @@ def handle_patent_creation_or_update(patent_id):
         novelty.novelty_score, utility.utility_score, obviousness.obviousness_score
     )
 
-    # Find the patent and update its patentability score
+    # Update the patent's patentability score
     patent = Patent.query.get(patent_id)
     patent.patentability_score = patentability_score
     db.session.commit()
@@ -220,6 +242,8 @@ def handle_patent_creation_or_update(patent_id):
         'obviousness_score': obviousness.obviousness_score,
         'patentability_score': patentability_score
     }
+
+
 
 class PatentResource(Resource):
     
@@ -328,11 +352,17 @@ class PatentResource(Resource):
 
         user_id = get_jwt_identity()
         patent = Patent.query.filter_by(id=patent_id, user_id=user_id).first()
+        print(f"Updating patent {patent_id}")
+        
         if patent:
-            if args['title']:
+            # Track whether title or description changed
+            force_update = False
+            if args['title'] and args['title'] != patent.title:
                 patent.title = args['title']
-            if args['description']:
+                force_update = True
+            if args['description'] and args['description'] != patent.description:
                 patent.description = args['description']
+                force_update = True
             if args['status']:
                 patent.status = args['status']
             if args['user_ids']:
@@ -340,6 +370,8 @@ class PatentResource(Resource):
                 patent.users = User.query.filter(User.id.in_(args['user_ids'])).all()
             
             db.session.commit()
+            print(f"Updated patent data: {patent.title}, {patent.description}, {patent.status}")
+
 
             # Trigger new prior art search
             keywords = extract_keywords(f"{patent.title} {patent.description}")
@@ -357,10 +389,13 @@ class PatentResource(Resource):
                 )
                 db.session.add(prior_art)
 
-            # Generate random values and calculate scores for utility, novelty, obviousness, and patentability
-            analysis_result = handle_patent_creation_or_update(patent.id)
+            # Handle patent creation or update scores (only regenerate if necessary)
+            analysis_result = handle_patent_creation_or_update(patent.id, force_update)
+            print(f"Analysis result: {analysis_result}")
 
             db.session.commit()
+            
+            print(f"Returning updated patent with id {patent.id} and scores: {analysis_result}")
 
             return {
                 'message': 'Patent updated successfully',
@@ -375,6 +410,7 @@ class PatentResource(Resource):
                 }
             }, 200
         return {'message': 'Patent not found'}, 404
+
 
 
     @jwt_required()
