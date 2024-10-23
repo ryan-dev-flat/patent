@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axiosInstance from '../utils/axiosInstance';
+import useAxios from '../utils/useAxios'; // Import the custom Axios hook
 import UpdatePatentForm from './UpdatePatentForm';
 import PatentScoreChart from './PatentScoreChart'; 
 
-const PatentCard = ({ patent, onDelete }) => {
+const PatentCard = ({ patent, onDelete, onUpdate }) => {
+    // Log the patent prop to see what is being passed to the card
+  
     const [users, setUsers] = useState([]);
     const [priorArt, setPriorArt] = useState([]);
     const [loadingPriorArt, setLoadingPriorArt] = useState(true);
@@ -29,6 +31,7 @@ const PatentCard = ({ patent, onDelete }) => {
     const [chartType, setChartType] = useState('radar');
 
     const navigate = useNavigate();
+    const axiosInstance = useAxios(); // Get the axios instance from the useAxios hook
 
     useEffect(() => {
         if (patent && patent.users) {
@@ -38,20 +41,12 @@ const PatentCard = ({ patent, onDelete }) => {
         const fetchAdditionalData = async () => {
             try {
                 // Fetch prior art
-                const priorArtResponse = await axiosInstance.get(`/patents/${patent.id}/prior_art`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+                const priorArtResponse = await axiosInstance.get(`/patents/${patent.id}/prior_art`);
                 
                 if (priorArtResponse.data.prior_art && priorArtResponse.data.prior_art.length > 0) {
                     setPriorArt(priorArtResponse.data.prior_art);
                 } else {
-                    const searchResponse = await axiosInstance.post(`/patents/${patent.id}/prior_art`, null, {
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem('token')}`
-                        }
-                    });
+                    const searchResponse = await axiosInstance.post(`/patents/${patent.id}/prior_art`);
                     setPriorArt(searchResponse.data.prior_art);
                 }
             } catch (error) {
@@ -63,32 +58,16 @@ const PatentCard = ({ patent, onDelete }) => {
             
             // Fetch utility, novelty, obviousness, and patentability scores
             try {
-                const utilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/utility`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+                const utilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/utility`);
                 setUtility(utilityResponse.data);
 
-                const noveltyResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/novelty`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+                const noveltyResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/novelty`);
                 setNovelty(noveltyResponse.data);
 
-                const obviousnessResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/obviousness`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+                const obviousnessResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/obviousness`);
                 setObviousness(obviousnessResponse.data);
 
-                const patentabilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/patentability_score`, {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+                const patentabilityResponse = await axiosInstance.get(`/patents/${patent.id}/analysis/patentability_score`);
                 setPatentability(patentabilityResponse.data);
             } catch (error) {
                 console.error('Error fetching analysis data', error);
@@ -96,15 +75,11 @@ const PatentCard = ({ patent, onDelete }) => {
         };
 
         fetchAdditionalData();
-    }, [patent.id, patent.users]);
+    }, [patent.id, patent.users, axiosInstance]);
 
     const handleDelete = async (id) => {
         try {
-            await axiosInstance.delete(`/patents/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`
-                }
-            });
+            await axiosInstance.delete(`/patents/${id}`);
             onDelete(id); // Call the callback function to update the parent component's state
         } catch (error) {
             console.error('Error deleting patent', error);
@@ -131,115 +106,154 @@ const PatentCard = ({ patent, onDelete }) => {
         return <UpdatePatentForm patentId={patent.id} />;
     }
 
-    if (showUpdateForm) {
-        return <UpdatePatentForm patentId={patent.id} />;
-    }
-
     return (
-        <div className="patent-card">
-            <h2>{patent.title}</h2>
-            <p>{patent.description}</p>
-            <p>Status: {patent.status}</p>
-            <p>Patent ID: {patent.id}</p>
-            <p>Created by: {patent.created_by}</p>
-            <p>Users: {users.length > 0 ? users.join(', ') : 'No users assigned'}</p>
+        <div className="card mb-4 shadow-sm">
+            <div className="card-body">
+                <h5 className="card-title">{patent.title}</h5>
+                <p className="card-text">{patent.description}</p>
 
-            {/* Display utility, novelty, obviousness, and patentability scores with conditional rendering */}
-            <p>
-                <Link to="#" onClick={() => setShowUtilityDetails(!showUtilityDetails)}>Utility Score:</Link> {utility.utility_score || 'N/A'}
-                {showUtilityDetails && (
-                    <div>
-                        <p><strong>Operable:</strong> {utility.operable ? 'Yes' : 'No'}</p>
-                        <p><strong>Useful:</strong> {utility.useful ? 'Yes' : 'No'}</p>
-                        <p><strong>Practical:</strong> {utility.practical ? 'Yes' : 'No'}</p>
+                {/* Patent Metadata */}
+                <ul className="list-group list-group-flush mb-3">
+                    <li className="list-group-item">Status: {patent.status}</li>
+                    <li className="list-group-item">Patent ID: {patent.id}</li>
+                    <li className="list-group-item">Created by: {patent.created_by}</li>
+                    <li className="list-group-item">
+                        Users: {users.length > 0 ? users.join(', ') : 'No users assigned'}
+                    </li>
+                </ul>
+
+                {/* Utility Score with Expandable Details */}
+                <p>
+                    <Link to="#" onClick={() => setShowUtilityDetails(!showUtilityDetails)}>
+                        Utility Score: {utility.utility_score || 'N/A'}
+                    </Link>
+                    {showUtilityDetails && (
+                        <div className="mt-2">
+                            <p><strong>Operable:</strong> {utility.operable ? 'Yes' : 'No'}</p>
+                            <p><strong>Useful:</strong> {utility.useful ? 'Yes' : 'No'}</p>
+                            <p><strong>Practical:</strong> {utility.practical ? 'Yes' : 'No'}</p>
+                        </div>
+                    )}
+                </p>
+
+                {/* Novelty Score with Expandable Details */}
+                <p>
+                    <Link to="#" onClick={() => setShowNoveltyDetails(!showNoveltyDetails)}>
+                        Novelty Score: {novelty.novelty_score || 'N/A'}
+                    </Link>
+                    {showNoveltyDetails && (
+                        <div className="mt-2">
+                            <p><strong>New Invention:</strong> {novelty.new_invention ? 'Yes' : 'No'}</p>
+                            <p><strong>Not Publicly Disclosed:</strong> {novelty.not_publicly_disclosed ? 'Yes' : 'No'}</p>
+                            <p><strong>Not Described in Printed Publication:</strong> {novelty.not_described_in_printed_publication ? 'Yes' : 'No'}</p>
+                            <p><strong>Not in Public Use:</strong> {novelty.not_in_public_use ? 'Yes' : 'No'}</p>
+                            <p><strong>Not on Sale:</strong> {novelty.not_on_sale ? 'Yes' : 'No'}</p>
+                        </div>
+                    )}
+                </p>
+
+                {/* Obviousness Score with Expandable Details */}
+                <p>
+                    <Link to="#" onClick={() => setShowObviousnessDetails(!showObviousnessDetails)}>
+                        Obviousness Score: {obviousness.obviousness_score || 'N/A'}
+                    </Link>
+                    {showObviousnessDetails && (
+                        <div className="mt-2">
+                            <p><strong>Scope of Prior Art:</strong> {obviousness.scope_of_prior_art}</p>
+                            <p><strong>Differences from Prior Art:</strong> {obviousness.differences_from_prior_art}</p>
+                            <p><strong>Level of Ordinary Skill:</strong> {obviousness.level_of_ordinary_skill}</p>
+                        </div>
+                    )}
+                </p>
+
+                {/* Patentability Score with Expandable Details */}
+                <p>
+                    <Link to="#" onClick={() => setShowPatentabilityDetails(!showPatentabilityDetails)}>
+                        Weighted Patentability Score: {patentability.patentability_score || 'N/A'}
+                    </Link>
+                    {showPatentabilityDetails && (
+                        <div className="mt-2">
+                            <p><strong>Patentability Likelihood:</strong> {getPatentabilityLikelihood(patentability.patentability_score)}</p>
+                        </div>
+                    )}
+                </p>
+
+                {/* Chart Type Selection and Visualization */}
+                <div className="mt-4">
+                    <h6>Patent Score Visualization</h6>
+                    <div className="btn-group mb-3">
+                        <button
+                            onClick={() => handleChartTypeChange('radar')}
+                            className={`btn btn-outline-primary ${chartType === 'radar' ? 'active' : ''}`}
+                        >
+                            Radar Chart
+                        </button>
+                        <button
+                            onClick={() => handleChartTypeChange('bar')}
+                            className={`btn btn-outline-primary ${chartType === 'bar' ? 'active' : ''}`}
+                        >
+                            Bar Chart
+                        </button>
+                        <button
+                            onClick={() => handleChartTypeChange('pie')}
+                            className={`btn btn-outline-primary ${chartType === 'pie' ? 'active' : ''}`}
+                        >
+                            Pie Chart
+                        </button>
                     </div>
-                )}
-            </p>
-            <p>
-                <Link to="#" onClick={() => setShowNoveltyDetails(!showNoveltyDetails)}>Novelty Score:</Link> {novelty.novelty_score || 'N/A'}
-                {showNoveltyDetails && (
-                    <div>
-                        <p><strong>New Invention:</strong> {novelty.new_invention ? 'Yes' : 'No'}</p>
-                        <p><strong>Not Publicly Disclosed:</strong> {novelty.not_publicly_disclosed ? 'Yes' : 'No'}</p>
-                        <p><strong>Not Described in Printed Publication:</strong> {novelty.not_described_in_printed_publication ? 'Yes' : 'No'}</p>
-                        <p><strong>Not in Public Use:</strong> {novelty.not_in_public_use ? 'Yes' : 'No'}</p>
-                        <p><strong>Not on Sale:</strong> {novelty.not_on_sale ? 'Yes' : 'No'}</p>
-                    </div>
-                )}
-            </p>
-            <p>
-                <Link to="#" onClick={() => setShowObviousnessDetails(!showObviousnessDetails)}>Non Obviousness Score:</Link> {obviousness.obviousness_score || 'N/A'}
-                {showObviousnessDetails && (
-                    <div>
-                        <p><strong>Scope of Prior Art:</strong> {obviousness.scope_of_prior_art}</p>
-                        <p><strong>Differences from Prior Art:</strong> {obviousness.differences_from_prior_art}</p>
-                        <p><strong>Level of Ordinary Skill:</strong> {obviousness.level_of_ordinary_skill}</p>
-                    </div>
-                )}
-            </p>
-            <p>
-                <Link to="#" onClick={() => setShowPatentabilityDetails(!showPatentabilityDetails)}>Weighted Patentability Score:</Link> {patentability.patentability_score || 'N/A'}
-                {showPatentabilityDetails && (
-                    <div>
-                        <p><strong>Patentability Likelihood:</strong> {getPatentabilityLikelihood(patentability.patentability_score)}</p>
-                    </div>
-                )}
-            </p>
-            <div>
-                <h3>Patent Score Visualization</h3>
-                <div>
-                    <button onClick={() => handleChartTypeChange('radar')} className={chartType === 'radar' ? 'active' : ''}>Radar Chart</button>
-                    <button onClick={() => handleChartTypeChange('bar')} className={chartType === 'bar' ? 'active' : ''}>Bar Chart</button>
-                    <button onClick={() => handleChartTypeChange('pie')} className={chartType === 'pie' ? 'active' : ''}>Pie Chart</button>
+                    <PatentScoreChart
+                        utility={utility}
+                        novelty={novelty}
+                        obviousness={obviousness}
+                        patentability={patentability}
+                        chartType={chartType}
+                    />
                 </div>
-                <PatentScoreChart 
-                    utility={utility}
-                    novelty={novelty}
-                    obviousness={obviousness}
-                    patentability={patentability}
-                    chartType={chartType}
-                />
-                 </div>
-            <div>
-                <Link to={`/patents/${patent.id}/update`}>
-                    <button>Update</button>
-                </Link>
-                {/* <Link to={`/patents/${patent.id}/analysis`}>Deep Analysis</Link> */}
-                <button onClick={() => handleDelete(patent.id)}>Delete</button>
-            </div>
 
-            <div>
-                <button onClick={togglePriorArt}>
-                    {showPriorArt ? 'Hide Prior Art' : 'Show Prior Art'}
-                </button>
+                {/* Action Buttons */}
+                <div className="mt-4">
+                    <Link to={`/patents/${patent.id}/update`} className="btn btn-warning me-2">
+                        Update Patent
+                    </Link>
+                    <button onClick={() => handleDelete(patent.id)} className="btn btn-danger">
+                        Delete Patent
+                    </button>
+                </div>
 
-                {showPriorArt && (
-                    <div>
-                        <h3>Prior Art</h3>
-                        {loadingPriorArt ? (
-                            <p>Loading prior art...</p>
-                        ) : errorPriorArt ? (
-                            <p>{errorPriorArt}</p>
-                        ) : priorArt && priorArt.length > 0 ? (
-                            <ul>
-                                {priorArt.map((art, index) => (
-                                    <li key={index}>
-                                        <p><strong>Title:</strong> {art.title}</p>
-                                        <p><strong>Abstract:</strong> {art.abstract}</p>
-                                        <p><strong>Patent Number:</strong> {art.patent_number}</p>
-                                        {art.url && (
-                                            <a href={art.url} target="_blank" rel="noopener noreferrer">
-                                                View Full Patent
-                                            </a>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p>No prior art found.</p>
-                        )}
-                    </div>
-                )}
+                {/* Prior Art Section */}
+                <div className="mt-4">
+                    <button onClick={togglePriorArt} className="btn btn-outline-secondary">
+                        {showPriorArt ? 'Hide Prior Art' : 'Show Prior Art'}
+                    </button>
+
+                    {showPriorArt && (
+                        <div className="mt-3">
+                            <h6>Prior Art</h6>
+                            {loadingPriorArt ? (
+                                <p>Loading prior art...</p>
+                            ) : errorPriorArt ? (
+                                <p className="text-danger">{errorPriorArt}</p>
+                            ) : priorArt && priorArt.length > 0 ? (
+                                <ul className="list-group">
+                                    {priorArt.map((art, index) => (
+                                        <li key={index} className="list-group-item">
+                                            <p><strong>Title:</strong> {art.title}</p>
+                                            <p><strong>Abstract:</strong> {art.abstract}</p>
+                                            <p><strong>Patent Number:</strong> {art.patent_number}</p>
+                                            {art.url && (
+                                                <a href={art.url} target="_blank" rel="noopener noreferrer">
+                                                    View Full Patent
+                                                </a>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p>No prior art found.</p>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

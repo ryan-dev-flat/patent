@@ -25,7 +25,7 @@ Patent Management System: A web application for managing patent registrations, c
 |  +--------------------------------------------+  |
 |  | Conditional Rendering (if token exists)    |  |
 |  |--------------------------------------------|  |
-|  | Chat Component                             |  |
+|  | Prior Art Component                        |  |
 |  | PatentabilityAnalysis Component            |  |
 |  | Patent Analysis Chart                      |  |
 |  +--------------------------------------------+  |
@@ -43,11 +43,11 @@ Patent Management System: A web application for managing patent registrations, c
 4. **As a user, I want to create a new patent entry so that I can keep track of my inventions.**
 5. **As a user, I want to analyze the patentability of my invention idea so that I can determine its novelty, non-obviousness, and utility. I want an overall patentability score based on these factors. I want a prior art search performed to generate data to support the patentabillity score.**
 6. **As a user, I want to see a visual representation of my patentability score in the form of a patentability analysis chart/widget.**
-7. **As a user, I want to chat with an AI-powered chatbot to get answers to my patent-related queries and to develop my patent application**
+7. **As a user, I want to search for prior art patents that have similarity to key words from my invemtion's title and description**
 
 **Implement something new not taught in the curriculum.**
-[Axios](https://axios-http.com/docs/api_intro)?
-[Material UI](https://mui.com/material-ui/getting-started/)
+[Axios](https://axios-http.com/docs/api_intro)
+[Recharts](https://recharts.org/en-US)
 **Implement [`useContext`](https://react.dev/reference/react/useContext) or [Redux](https://redux.js.org/)to manage State**
 ## Implement validations and error handling.
 
@@ -93,7 +93,6 @@ Patent Management System: A web application for managing patent registrations, c
 - **Functions**:
   - `sendMessage`
 - **Children**:
-  - `h2` (Chat with GPT)
   - `textarea` (Message Input)
   - `button` (Send)
   - `div` (Response)
@@ -224,7 +223,7 @@ Patent Management System: A web application for managing patent registrations, c
 ## Schema Screenshot
 !Schema Screenshot
 
-![alt text](image-1.png)
+![Database Schema](image-3.png)
 
 ## API Routes
 - Include full CRUD on at least 1 model, following REST conventions.
@@ -272,8 +271,8 @@ Patent Management System: A web application for managing patent registrations, c
 !Kanban Board
 
 ## New Technologies
-- **Material-UI**: For styling and UI components.
-- **React Bootstrap**: For responsive design and additional UI components.
+- **spaCy**:  For Natural Language Processing in Python. It features NER, POS tagging, dependency parsing, word vectors.  Used to extract keywords and phrases from users' patent title and description for searching the USPTO patent database. [`spaCy`](https://spacy.io/)
+- **React Bootstrap**: For responsive design and additional UI components. [`React Bootstrap`]https://react-bootstrap.github.io/
 - **Tailwind CSS**: For utility-first CSS styling.
 - **Deployment**: Plan to deploy the application using platforms like Heroku or Render.
 - **State Management**: Use React's [`useContext`]((https://react.dev/reference/react/useContext) ) or [Redux](https://redux.js.org/) for state management.

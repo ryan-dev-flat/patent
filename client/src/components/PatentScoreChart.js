@@ -7,7 +7,7 @@ const PatentScoreChart = ({ utility, novelty, obviousness, patentability, chartT
   const data = [
     { name: 'Utility', weighted: utility.utility_score || 0 },
     { name: 'Novelty', weighted: novelty.novelty_score || 0 },
-    { name: 'Non-Obviousness', weighted: 1 - (obviousness.obviousness_score || 0) },
+    { name: 'Non-Obviousness', weighted: obviousness.obviousness_score || 0 },
     { name: 'Patentability Overall', weighted: patentability.patentability_score || 0 },
   ];
 

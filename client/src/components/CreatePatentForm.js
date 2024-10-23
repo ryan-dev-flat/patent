@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosInstance from '../utils/axiosInstance';
+import axiosInstance from '../utils/useAxios';
 import { UserContext } from '../context/UserContext';
 
 const CreatePatentForm = ({ onPatentCreated }) => {
@@ -41,11 +41,7 @@ const CreatePatentForm = ({ onPatentCreated }) => {
         users: users 
       };
 
-      const response = await axiosInstance.post('/patents', createData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await axiosInstance.post('/patents', createData);
       console.log('Response data:', response.data); 
       const newPatentId = response.data.patent_id; 
       setPatentId(newPatentId); 
@@ -64,46 +60,94 @@ const CreatePatentForm = ({ onPatentCreated }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label>Title:</label>
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
-      </div>
-      <div>
-        <label>Description:</label>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} required></textarea>
-      </div>
-      <div>
-        <label>Status:</label>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} required>
-          <option value="Pending">Pending</option>
-          <option value="Granted">Granted</option>
-          <option value="Rejected">Rejected</option>
-          <option value="Expired">Expired</option>
-          <option value="Abandoned">Abandoned</option>
-        </select>
-      </div>
-      <div>
-        <label>Additional Users:</label>
-        <input
-          type="text"
-          value={newUsername}
-          onChange={(e) => setNewUsername(e.target.value)}
-        />
-        <button type="button" onClick={handleAddUser}>Add User</button>
-        <ul>
-          {users.map((username, index) => (
-            <li key={index}>
-              {username} 
-              {username !== user?.username && (
-                <button type="button" onClick={() => handleRemoveUser(username)}>Remove</button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <button type="submit">Create Patent</button>
-    </form>
+    <div className="container mt-5">
+      <h2>Create New Patent</h2>
+      <form onSubmit={handleSubmit}>
+        {/* Title */}
+        <div className="mb-3">
+          <label htmlFor="title" className="form-label">Title</label>
+          <input
+            type="text"
+            id="title"
+            className="form-control"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+        </div>
+
+        {/* Description */}
+        <div className="mb-3">
+          <label htmlFor="description" className="form-label">Description</label>
+          <textarea
+            id="description"
+            className="form-control"
+            rows="3"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+          ></textarea>
+        </div>
+
+        {/* Status */}
+        <div className="mb-3">
+          <label htmlFor="status" className="form-label">Status</label>
+          <select
+            id="status"
+            className="form-select"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            required
+          >
+            <option value="Pending">Pending</option>
+            <option value="Granted">Granted</option>
+            <option value="Rejected">Rejected</option>
+            <option value="Expired">Expired</option>
+            <option value="Abandoned">Abandoned</option>
+          </select>
+        </div>
+
+        {/* Add Users */}
+        <div className="mb-3">
+          <label htmlFor="newUser" className="form-label">Add Additional Users</label>
+          <div className="input-group mb-3">
+            <input
+              type="text"
+              id="newUser"
+              className="form-control"
+              value={newUsername}
+              onChange={(e) => setNewUsername(e.target.value)}
+            />
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleAddUser}
+            >
+              Add User
+            </button>
+          </div>
+          <ul className="list-group">
+            {users.map((username, index) => (
+              <li key={index} className="list-group-item d-flex justify-content-between align-items-center">
+                {username}
+                {username !== user?.username && (
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={() => handleRemoveUser(username)}
+                  >
+                    Remove
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Submit Button */}
+        <button type="submit" className="btn btn-success">Create Patent</button>
+      </form>
+    </div>
   );
 };
 

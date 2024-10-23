@@ -5,7 +5,7 @@ import spacy
 
 fake = Faker()
 
-# Load the spaCy model
+
 nlp = spacy.load("en_core_web_sm")
 
 def extract_keywords(text):
@@ -36,7 +36,7 @@ def fetch_patent_grants(keywords):
         return patents if patents else generate_mock_patents(3)
     else:
         print(f"Error fetching patents: {response.status_code} - {response.text}")
-        return generate_mock_patents(3)
+        return generate_mock_patents(5)
 
 def generate_mock_patents(num_patents):
     return [
@@ -49,13 +49,13 @@ def generate_mock_patents(num_patents):
         for _ in range(num_patents)
     ]
 
-def search_case_law(keywords):
-    from app import create_app
-    url = f'https://api.harvard.edu/federal-patent-caselaw?query={" ".join(keywords)}'
-    headers = {
-        'Authorization': 'Bearer your_harvard_api_key'
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.json().get('results', [])
-    return []
+# def search_case_law(keywords):
+#     from app import create_app
+#     url = f'https://api.harvard.edu/federal-patent-caselaw?query={" ".join(keywords)}'
+#     headers = {
+#         'Authorization': 'Bearer your_harvard_api_key'
+#     }
+#     response = requests.get(url, headers=headers)
+#     if response.status_code == 200:
+#         return response.json().get('results', [])
+#     return []

@@ -107,7 +107,7 @@ class Utility(db.Model, SerializerMixin):
     patent = db.relationship('Patent', back_populates='utility')
 
     def calculate_utility_score(self):
-        score = 0.0
+        score = 0.05
         if self.useful:
             score += 0.4
         if self.operable:

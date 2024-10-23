@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axiosInstance from '../utils/axiosInstance';
+import useAxios from '../utils/useAxios'; // Use useAxios hook
 import { useNavigate } from 'react-router-dom';
 
 const UserAccount = () => {
@@ -8,15 +8,12 @@ const UserAccount = () => {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  const axiosInstance = useAxios(); // Use Axios instance with token handling
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await axiosInstance.get('/update_user', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
-        });
+        const response = await axiosInstance.get('/update_user');
         setUsername(response.data.username);
       } catch (error) {
         console.error('Error fetching user data', error);
@@ -24,7 +21,7 @@ const UserAccount = () => {
     };
 
     fetchUserData();
-  }, []);
+  }, [axiosInstance]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -33,11 +30,7 @@ const UserAccount = () => {
       if (newUsername) updateData.username = newUsername;
       if (password) updateData.password = password;
 
-      const response = await axiosInstance.patch('/update_user', updateData, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await axiosInstance.patch('/update_user', updateData);
       setMessage(response.data.message);
       setNewUsername('');
       setPassword('');
@@ -48,11 +41,7 @@ const UserAccount = () => {
 
   const handleDelete = async () => {
     try {
-      await axiosInstance.delete('/delete_account', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      await axiosInstance.delete('/delete_account');
       localStorage.removeItem('token');
       navigate('/register');
     } catch (error) {
@@ -61,30 +50,40 @@ const UserAccount = () => {
   };
 
   return (
-    <div>
+    <div className="container mt-5">
       <h2>User Account</h2>
-      <p>Current Username: {username}</p>
+      <p>Current Username: <strong>{username}</strong></p>
+
+      {/* Update Form */}
       <form onSubmit={handleUpdate}>
-        <div>
-          <label>New Username:</label>
+        <div className="mb-3">
+          <label htmlFor="newUsername" className="form-label">New Username:</label>
           <input
             type="text"
+            id="newUsername"
+            className="form-control"
             value={newUsername}
             onChange={(e) => setNewUsername(e.target.value)}
           />
         </div>
-        <div>
-          <label>New Password:</label>
+        <div className="mb-3">
+          <label htmlFor="password" className="form-label">New Password:</label>
           <input
             type="password"
+            id="password"
+            className="form-control"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
-        <button type="submit">Update</button>
+        <button type="submit" className="btn btn-primary">Update</button>
       </form>
-      {message && <p>{message}</p>}
-      <button onClick={handleDelete}>Delete Account</button>
+
+      {/* Message */}
+      {message && <p className="text-success mt-3">{message}</p>}
+
+      {/* Delete Account Button */}
+      <button onClick={handleDelete} className="btn btn-danger mt-3">Delete Account</button>
     </div>
   );
 };
