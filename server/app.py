@@ -9,8 +9,10 @@ from config import Config
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    print("Connecting to database:", app.config['SQLALCHEMY_DATABASE_URI'])
 
     db.init_app(app)
+
     migrate = Migrate(app, db)
     jwt = JWTManager(app)
     CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)

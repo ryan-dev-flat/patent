@@ -276,3 +276,13 @@ Patent Management System: A web application for managing patent registrations, c
 - **Tailwind CSS**: For utility-first CSS styling.
 - **Deployment**: Plan to deploy the application using platforms like Heroku or Render.
 - **State Management**: Use React's [`useContext`]((https://react.dev/reference/react/useContext) ) or [Redux](https://redux.js.org/) for state management.
+
+## Environment Setup
+
+### Prerequisites
+- Install **pyenv** and **pyenv-virtualenv**:
+  - [pyenv installation instructions](https://github.com/pyenv/pyenv#installation)
+  - [pyenv-virtualenv installation instructions](https://github.com/pyenv/pyenv-virtualenv#installation)
+- Install Python 3.9.20 using `pyenv`:
+  ```bash
+  pyenv install 3.9.20
