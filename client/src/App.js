@@ -1,79 +1,46 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import jwtDecode from 'jwt-decode';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { Button, TextField, Container, Typography, Box } from '@mui/material';
-import Chat from './components/Chat';
-import PatentabilityAnalysis from './components/PatentabilityAnalysis';
-import Dashboard from './components/Dashboard';
-import PatentCards from './components/PatentCards';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import MyChartComponent from './components/MyChartComponent';
+import Home from './components/Home';
+import Register from './components/Register';
+import Login from './components/Login';
+import Dashboard from './components/Dashboard';
+import PatentCards from './components/PatentCard';
+import PriorArtComponent from './components/PriorArtComponent';
+import Logout from './components/Logout';
+import ErrorBoundary from './components/ErrorBoundary';
+import CreatePatentForm from './components/CreatePatentForm';
+import UpdatePatentForm from './components/UpdatePatentForm';
+import UserAccount from './components/UserAccount';
+import { UserProvider } from './context/UserContext';
 
 function App() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [token, setToken] = useState('');
-  const [user, setUser] = useState(null);
-
-  const register = async () => {
-    await axios.post('http://localhost:5000/api/register', { username, password });
-  };
-
-  const login = async () => {
-    const response = await axios.post('http://localhost:5000/api/login', { username, password });
-    const token = response.data.access_token;
-    setToken(token);
-    const decoded = jwtDecode(token);
-    setUser(decoded);
-  };
-
-  const chartData = {
-    labels: ['Novelty', 'Non-obviousness', 'Utility'],
-    datasets: [{
-      label: 'Patentability Analysis',
-      data: [65, 59, 80],
-      fill: false,
-      backgroundColor: 'rgb(75, 192, 192)',
-      borderColor: 'rgba(75, 192, 192, 0.2)',
-    }],
-  };
+  const [token, setToken] = useState(null);
 
   return (
-    <Router>
-      <Container>
-        <Header />
-        <Typography variant="h1">Patent Management</Typography>
-        <Box>
-          <Typography variant="h2">Register</Typography>
-          <TextField label="Username" onChange={(e) => setUsername(e.target.value)} />
-          <TextField label="Password" type="password" onChange={(e) => setPassword(e.target.value)} />
-          <Button variant="contained" onClick={register}>Register</Button>
-        </Box>
-        <Box>
-          <Typography variant="h2">Login</Typography>
-          <TextField label="Username" onChange={(e) => setUsername(e.target.value)} />
-          <TextField label="Password" type="password" onChange={(e) => setPassword(e.target.value)} />
-          <Button variant="contained" onClick={login}>Login</Button>
-        </Box>
-        {token && (
-          <>
+    <UserProvider>
+      <Router>
+        <div className="App">
+          <Header />
+          <ErrorBoundary>
             <Routes>
-              <Route path="/chat" element={<Chat token={token} />} />
-              <Route path="/analysis" element={<PatentabilityAnalysis token={token} />} />
-              <Route path="/dashboard" element={<Dashboard token={token} />} />
-              <Route path="/patents" element={<PatentCards token={token} />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/register" element={<Register setToken={setToken} />} />
+              <Route path="/login" element={<Login setToken={setToken} />} />
+              <Route path="/create-patent" element={<CreatePatentForm />} />
+              <Route path="/patents/:patentId/update" element={<UpdatePatentForm />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/patents" element={<PatentCards />} />
+              <Route path="/patents/:id/prior-art" element={<PriorArtComponent />} />
+              <Route path="/logout" element={<Logout />} />
+              <Route path="/user-account" element={<UserAccount />} />
             </Routes>
-            <Box>
-              <Typography variant="h2">Patent Analysis Chart</Typography>
-              <MyChartComponent data={chartData} />
-            </Box>
-          </>
-        )}
-        <Footer />
-      </Container>
-    </Router>
+          </ErrorBoundary>
+          <Footer />
+        </div>
+      </Router>
+    </UserProvider>
   );
 }
 

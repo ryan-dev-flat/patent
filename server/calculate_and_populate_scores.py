@@ -3,7 +3,7 @@ from models import db, Patent, Novelty, Utility, Obviousness
 
 def calculate_and_populate_scores():
     # Fetch the first 20 patents
-    patents = Patent.query.limit(20).all()
+    patents = Patent.query.all()
 
     for patent in patents:
         # Ensure novelty, utility, and obviousness instances exist
@@ -37,6 +37,6 @@ def calculate_and_populate_scores():
     print("Patentability scores and related scores have been calculated and populated successfully.")
 
 if __name__ == "__main__":
-    app = create_app()  # Create an instance of your Flask app
+    app = create_app()  # Create an instance of my Flask app
     with app.app_context():
         calculate_and_populate_scores()
