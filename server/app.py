@@ -25,7 +25,9 @@ def create_app():
     return app
 
 if __name__ == '__main__':
+    import os
     app = create_app()
-    app.run(debug=True)
+    debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() in ['true', '1', 't']
+    app.run(debug=debug_mode)
 
 
